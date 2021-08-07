@@ -1,0 +1,217 @@
+---
+title: "Tesis - Nueva Ley de Alquileres"
+author: "Pablo Mayochi"
+date: "26/6/2021"
+output: html_document
+---
+
+*Importamos el dataset de Properati para analizar la evolución de los precios*
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(ggmap)
+library(lubridate)
+library(dplyr)
+library(osmdata)
+```
+
+```{r message=FALSE, warning=FALSE}
+data_properati <- vroom::vroom("https://storage.googleapis.com/properati-data-public/ar_properties.csv.gz")
+```
+
+*Veamos sus columnas y valores resumidos*
+
+```{r}
+summary(data_properati)
+```
+
+*Hay bastantes columnas y valores por limpiar. Varias columnas no son de nuestro interés, como Título y descripción de la publicación, así como tampoco nos interesan los valores sin ubicación (latitud y longitud) así como las publicaciones sin precio. Adicionalmente, nos interesa quedarnos con un dataset de Argentina, y los tipos de propiedad para vivienda.*
+
+```{r}
+data_properati <- filter(data_properati, !is.na(lat), !is.na(lon), !is.na(price), !is.na(currency), l1=="Argentina", !price_period=="Semanal", !currency=="COP", property_type=="Departamento" | property_type=="PH" | property_type=="Casa")
+data_properati <- select(data_properati, !title & !description & !id & !ad_type)
+```
+
+*Vemos que el dataset bajó considerablemente. Ahora tenemos que convertir las variables de caracteres en factores para poder analizarlos correctamente.*
+
+```{r}
+data_properati <- data_properati %>% mutate_if(is.character,as.factor)
+summary(data_properati)
+```
+
+*Tenemos que llevar las publicaciones a una misma unidad de medida monetaria, sea en pesos o en dólares, para poder compararlas por barrio y en el tiempo.*
+
+```{r}
+dolar_bcra <- readxl::read_xlsx("DOLAR.BCRA.xlsx")
+```
+
+*Adjuntemos la cotización que tenia el dolar en cada fecha para la publicación del inmueble en ese día*
+
+```{r}
+data_properati <- left_join(data_properati, dolar_bcra, by=c("created_on"="Fecha"))
+```
+
+```{r}
+summary(data_properati)
+```
+
+*Como a partir del 2020 ya en Argentina existía el recargo del 30% y del 35% a la compra de dólares, empujando la brecha cambiaria del dolar "blue", y considerando que los precios de las propiedades por el efecto especulativo se calcularon históricamente en base al dolar "blue", debiéramos tener en cuenta ese recargo del 65% para el tipo de cambio*
+
+```{r}
+data_properati <- data_properati %>%
+  rename("Cotiz_dolar"="Tipo de Cambio de Referencia - en Pesos - por Dólar")
+```
+
+```{r}
+data_properati <- data_properati %>% mutate(Cotiz_dolar=Cotiz_dolar*1.65)
+summary(data_properati$Cotiz_dolar)
+```
+
+*Vemos que tenemos algunos NA, eso se debe a que la fecha de publicación de la propiedad fue un sábado, domingo, o feriado, por lo que el BCRA no emitió cotización para ese día en su informe. Tendremos que colocar la cotización del día más cercano*
+
+```{r}
+https://es.stackoverflow.com/questions/325289/c%C3%B3mo-reemplazar-varios-na-con-sus-valores-m%C3%A1s-cercanos-temporalmente
+```
+
+```{r}
+data_properati <- data_properati %>% mutate(precio = case_when(currency == "USD" ~ price*Cotiz_dolar, currency == "ARS" ~ price))
+summary(data_properati$precio)
+```
+
+```{r}
+options(scipen = 10)
+ggplot(data = data_properati) + geom_histogram(aes(x = precio))
+```
+
+*Continuando, nos aseguramos que tenemos los datos de Argentina, sin outliers*
+
+```{r}
+ggplot()+
+  geom_point(data=data_properati, aes(x=lon, y=lat)) +
+  theme_minimal() +
+  theme(legend.title=element_text(size=8))+
+  labs(title = "Mapa base", 
+       subtitle  = "Fuente: Properati")
+```
+
+*Tenemos valores fuera de Argentina que deberemos filtrar*
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+*Ahora dividimos nuestro dataset entre las publicaciones que corresponden a Capital Federal y aquellas que no*
+
+```{r}
+data_properati_non_CABA <- filter(data_properati, !l2=="Capital Federal")
+summary(data_properati_non_CABA)
+```
+
+```{r}
+data_properati_CABA <- filter(data_properati, l2=="Capital Federal")
+summary(data_properati_CABA)
+```
+
+*Finalmente tenemos el dataset con el que queremos trabajar nuestros análisis. Sin embargo, tenemos que mapearlo primero para asegurarnos de ello.*
+
+```{r}
+barrios <- read_sf("barrios.geojson")
+barrios <- st_transform(barrios, 4326)
+data_properati <- st_as_sf(data_properati,coords=c("lon","lat"), crs=4326)
+```
+
+```{r fig.width=20, fig.height=18}
+ggplot()+
+  geom_sf(data=barrios) +
+  geom_sf(data=data_properati_CABA) +
+  theme_minimal() +
+  theme(legend.title=element_text(size=8))+
+  coord_sf(datum = NA)+
+  labs(title = "Mapa base", 
+       subtitle  = "Fuente: Properati")
+```
+
+*Haremos un join espacial con el dataset de Barrios para quedarnos con las propiedades de la Ciudad Autónoma de Buenos Aires*
+
+```{r}
+propiedadesCABA <- mutate(st_join(data_properati_CABA, barrios))
+propiedadesCABA <- filter(propiedadesCABA, !is.na(barrio))
+```
+
+*Mapeamos nuevamente*
+
+```{r fig.width=20, fig.height=18}
+ggplot()+
+  geom_sf(data=barrios) +
+  geom_sf(data=propiedadesCABA) +
+  theme_minimal() +
+  theme(legend.title=element_text(size=8))+
+  coord_sf(datum = NA)+
+  labs(title = "Mapa base", 
+       subtitle  = "Fuente: Properati")
+```
+
+*Veamos como se distribuyen los valores*
+
+```{r}
+options(scipen = 10)
+ggplot(data = propiedadesCABA) + geom_histogram(aes(x = precio))
+```
+
+*Vemos que tenemos valores muy extremos*
+
+```{r}
+propiedadesCABA %>% 
+    top_n(20, price) %>% 
+    arrange(desc(price)) %>% 
+    select(precio, property_type, operation_type, barrio, perimetro)
+```
+
+```{r}
+summary(propiedadesCABA$precio)
+```
+
+*Nos será conveniente dividir el dataset en dos. Por un lado venta, y por otro lado alquileres. Fundamentalmente esto se debe a que los Alquileres se publican en pesos y las Ventas de inmuebles en dólares.*
+
+```{r}
+propiedadesCABAventa <- filter(propiedadesCABA, operation_type == "Venta")
+propiedadesCABAalq <- filter(propiedadesCABA, !operation_type == "Venta")
+```
+
+```{r}
+summary(propiedadesCABAventa)
+```
+
+```{r}
+summary(propiedadesCABAalq)
+```
+
+```{r}
+ggplot(data = propiedadesCABAventa) + geom_histogram(aes(x = precio))
+```
+
+```{r}
+ggplot(data = propiedadesCABAalq) + geom_histogram(aes(x = precio))
+```
+
+*Ahora realizaremos un mapa coroplético para identificar los barrios según su promedio de precio por m2*
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+publicxfecha <- data_properati %>% 
+group_by(fecha)  %>% 
+summarise(n=n())
+```
