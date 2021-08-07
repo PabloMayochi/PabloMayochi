@@ -1,6 +1,6 @@
 ---
-title: "Tesis - Nueva Ley de Alquileres"
-author: "Pablo Mayochi"
+title: "Como impactó la Nueva Ley de Alquileres"
+author: "Bardoneschi Gonzalo - Cornudet Victoria - Mayochi Pablo"
 date: "26/6/2021"
 output: html_document
 ---
@@ -72,7 +72,7 @@ summary(data_properati$Cotiz_dolar)
 *Vemos que tenemos algunos NA, eso se debe a que la fecha de publicación de la propiedad fue un sábado, domingo, o feriado, por lo que el BCRA no emitió cotización para ese día en su informe. Tendremos que colocar la cotización del día más cercano*
 
 ```{r}
-https://es.stackoverflow.com/questions/325289/c%C3%B3mo-reemplazar-varios-na-con-sus-valores-m%C3%A1s-cercanos-temporalmente
+https://tidyr.tidyverse.org/reference/fill.html
 ```
 
 ```{r}
