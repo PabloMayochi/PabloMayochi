@@ -70,22 +70,6 @@ data_properati <- data_properati %>% mutate(Cotiz_dolar=Cotiz_dolar*1.65)
 summary(data_properati$Cotiz_dolar)
 ```
 
-*Para un análisis más agregado, necesitamos verlo por año y mes*
-
-#Lubridate al rescate
-
-```{r}
-data_properati <- data_properati %>%
-    mutate(year=year(created_on),
-        month=month(created_on),
-        day=day(created_on))
-```
-
-```{r}
-data_properati <- data_properati %>% paste(c(data_properati$year,data_properati$month)
-```
-
-
 *Vemos que tenemos algunos NA, eso se debe a que la fecha de publicación de la propiedad fue un sábado, domingo, o feriado, por lo que el BCRA no emitió cotización para ese día en su informe. Tendremos que colocar la cotización del día más cercano*
 
 ```{r}
@@ -106,6 +90,25 @@ summary(data_properati$precio)
 options(scipen = 10)
 ggplot(data = data_properati) + geom_histogram(aes(x = precio))
 ```
+
+*Para un análisis más agregado, necesitamos verlo por año y mes*
+
+#Lubridate al rescate
+
+```{r}
+data_properati <- data_properati %>%
+    mutate(year=year(created_on),
+        month=month(created_on),
+        day=day(created_on))
+summary(data_properati)
+```
+
+¿Como generamos variable mes-año/año-mes?
+
+```{r}
+
+```
+
 
 *Continuando, nos aseguramos que tenemos los datos de Argentina, sin outliers*
 
