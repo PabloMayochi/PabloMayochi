@@ -32,6 +32,7 @@ summary(data_properati)
 ```{r}
 data_properati <- filter(data_properati, !is.na(lat), !is.na(lon), !is.na(price), !is.na(currency), l1=="Argentina", !price_period=="Semanal", !currency=="COP", property_type=="Departamento" | property_type=="PH" | property_type=="Casa")
 data_properati <- select(data_properati, !title & !description & !id & !ad_type)
+data_properati <- data_properati %>% mutate(operation_type = case_when(operation_type == "Alquiler temporal" ~ "Alquiler", operation_type == "Alquiler" ~ "Alquiler", operation_type == "Venta" ~ "Venta"))
 ```
 
 *Vemos que el dataset bajó considerablemente. Ahora tenemos que convertir las variables de caracteres en factores para poder analizarlos correctamente.*
@@ -69,10 +70,31 @@ data_properati <- data_properati %>% mutate(Cotiz_dolar=Cotiz_dolar*1.65)
 summary(data_properati$Cotiz_dolar)
 ```
 
+*Para un análisis más agregado, necesitamos verlo por año y mes*
+
+#Lubridate al rescate
+
+```{r}
+data_properati <- data_properati %>%
+    mutate(year=year(created_on),
+        month=month(created_on),
+        day=day(created_on))
+```
+
+```{r}
+data_properati <- data_properati %>% paste(c(data_properati$year,data_properati$month)
+```
+
+
 *Vemos que tenemos algunos NA, eso se debe a que la fecha de publicación de la propiedad fue un sábado, domingo, o feriado, por lo que el BCRA no emitió cotización para ese día en su informe. Tendremos que colocar la cotización del día más cercano*
 
 ```{r}
-https://tidyr.tidyverse.org/reference/fill.html
+data_properati %>% arrange(created_on, desc())
+data_properati <- data_properati %>% 
+  fill(Cotiz_dolar)
+data_properati <- data_properati %>% 
+  fill(Cotiz_dolar, .direction = "downup")
+summary(data_properati$Cotiz_dolar)
 ```
 
 ```{r}
@@ -88,22 +110,15 @@ ggplot(data = data_properati) + geom_histogram(aes(x = precio))
 *Continuando, nos aseguramos que tenemos los datos de Argentina, sin outliers*
 
 ```{r}
-ggplot()+
-  geom_point(data=data_properati, aes(x=lon, y=lat)) +
-  theme_minimal() +
-  theme(legend.title=element_text(size=8))+
+data_properati <- st_as_sf(data_properati,coords=c("lon","lat"), crs=4326)
+```
+
+
+```{r}
+ggplot(data_properati)+
+  geom_sf() +
   labs(title = "Mapa base", 
-       subtitle  = "Fuente: Properati")
-```
-
-*Tenemos valores fuera de Argentina que deberemos filtrar*
-
-```{r}
-
-```
-
-```{r}
-
+       subtitle  = "Fuentes: Properati")
 ```
 
 *Ahora dividimos nuestro dataset entre las publicaciones que corresponden a Capital Federal y aquellas que no*
@@ -123,8 +138,26 @@ summary(data_properati_CABA)
 ```{r}
 barrios <- read_sf("barrios.geojson")
 barrios <- st_transform(barrios, 4326)
-data_properati <- st_as_sf(data_properati,coords=c("lon","lat"), crs=4326)
 ```
+
+```{r fig.width=20, fig.height=18}
+ggplot()+
+  geom_sf(data=barrios) +
+  geom_sf(data=data_properati_CABA) +
+  theme_minimal() +
+  theme(legend.title=element_text(size=8))+
+  labs(title = "Mapa base", 
+       subtitle  = "Fuente: Properati")
+```
+
+*Haremos un join espacial con el dataset de Barrios para quedarnos con las propiedades de la Ciudad Autónoma de Buenos Aires*
+
+```{r}
+data_properati_CABA <- mutate(st_join(data_properati_CABA, barrios))
+data_properati_CABA <- filter(data_properati_CABA, !is.na(barrio))
+```
+
+*Mapeamos nuevamente*
 
 ```{r fig.width=20, fig.height=18}
 ggplot()+
@@ -137,68 +170,67 @@ ggplot()+
        subtitle  = "Fuente: Properati")
 ```
 
-*Haremos un join espacial con el dataset de Barrios para quedarnos con las propiedades de la Ciudad Autónoma de Buenos Aires*
-
-```{r}
-propiedadesCABA <- mutate(st_join(data_properati_CABA, barrios))
-propiedadesCABA <- filter(propiedadesCABA, !is.na(barrio))
-```
-
-*Mapeamos nuevamente*
-
-```{r fig.width=20, fig.height=18}
-ggplot()+
-  geom_sf(data=barrios) +
-  geom_sf(data=propiedadesCABA) +
-  theme_minimal() +
-  theme(legend.title=element_text(size=8))+
-  coord_sf(datum = NA)+
-  labs(title = "Mapa base", 
-       subtitle  = "Fuente: Properati")
-```
-
 *Veamos como se distribuyen los valores*
 
 ```{r}
 options(scipen = 10)
-ggplot(data = propiedadesCABA) + geom_histogram(aes(x = precio))
+ggplot(data = data_properati_CABA) + geom_histogram(aes(x = precio))
 ```
 
 *Vemos que tenemos valores muy extremos*
 
 ```{r}
-propiedadesCABA %>% 
+data_properati_CABA %>% 
     top_n(20, price) %>% 
     arrange(desc(price)) %>% 
     select(precio, property_type, operation_type, barrio, perimetro)
 ```
 
 ```{r}
-summary(propiedadesCABA$precio)
+summary(data_properati_CABA$precio)
+```
+
+*Veamos como evolucionó la cantidad de publicaciones entre venta y alquiler. Primero en la generalidad de Argentina, y luego diferenciaremos CABA y las demás provincias*
+
+```{r message=FALSE, warning=FALSE}
+publicxfechaarg <- data_properati %>% 
+group_by(created_on, operation_type)  %>% 
+summarise(n=n())
+```
+
+```{r}
+
+```
+
+```{r}
+ggplot(publicxfechaarg) +
+geom_line(aes(x=created_on, y=n, color=operation_type))
 ```
 
 *Nos será conveniente dividir el dataset en dos. Por un lado venta, y por otro lado alquileres. Fundamentalmente esto se debe a que los Alquileres se publican en pesos y las Ventas de inmuebles en dólares.*
 
 ```{r}
-propiedadesCABAventa <- filter(propiedadesCABA, operation_type == "Venta")
-propiedadesCABAalq <- filter(propiedadesCABA, !operation_type == "Venta")
+data_properati_CABA_venta <- filter(data_properati_CABA, operation_type == "Venta")
+data_properati_CABA_alq <- filter(data_properati_CABA, !operation_type == "Venta")
 ```
 
 ```{r}
-summary(propiedadesCABAventa)
+summary(data_properati_CABA_venta)
 ```
 
 ```{r}
-summary(propiedadesCABAalq)
+summary(data_properati_CABA_alq)
 ```
 
 ```{r}
-ggplot(data = propiedadesCABAventa) + geom_histogram(aes(x = precio))
+ggplot(data = data_properati_CABA_venta) + geom_histogram(aes(x = precio))
 ```
 
 ```{r}
-ggplot(data = propiedadesCABAalq) + geom_histogram(aes(x = precio))
+ggplot(data = data_properati_CABA_alq) + geom_histogram(aes(x = precio))
 ```
+
+
 
 *Ahora realizaremos un mapa coroplético para identificar los barrios según su promedio de precio por m2*
 
@@ -208,10 +240,4 @@ ggplot(data = propiedadesCABAalq) + geom_histogram(aes(x = precio))
 
 ```{r}
 
-```
-
-```{r}
-publicxfecha <- data_properati %>% 
-group_by(fecha)  %>% 
-summarise(n=n())
 ```
