@@ -1,5 +1,5 @@
 ---
-title: "Como impactó la Nueva Ley de Alquileres"
+title: "Como impactó la Nueva Ley de Alquileres en el Mercado Inmobiliario"
 author: "Bardoneschi Gonzalo - Cornudet Victoria - Mayochi Pablo"
 date: "26/6/2021"
 output: html_document
@@ -81,6 +81,8 @@ data_properati <- data_properati %>%
 summary(data_properati$Cotiz_dolar)
 ```
 
+*Llevamos todos los precios a pesos argentinos para trabajar en la misma unidad de medida y poder comparar*
+
 ```{r}
 data_properati <- data_properati %>% mutate(precio = case_when(currency == "USD" ~ price*Cotiz_dolar, currency == "ARS" ~ price))
 summary(data_properati$precio)
@@ -91,31 +93,72 @@ options(scipen = 10)
 ggplot(data = data_properati) + geom_histogram(aes(x = precio))
 ```
 
-*Para un análisis más agregado, necesitamos verlo por año y mes*
-
-#Lubridate al rescate
+*Analizamos la evolución de la variable*
 
 ```{r}
-data_properati <- data_properati %>%
-    mutate(year=year(created_on),
-        month=month(created_on),
-        day=day(created_on))
+class(data_properati$created_on)
+```
+
+```{r}
+data_properati <- data_properati %>% 
+  mutate(fecha=as.Date(as.character(as.POSIXct(created_on))))
+```
+
+```{r}
+class(data_properati$fecha)
+```
+
+```{r}
+data_properati <- data_properati %>% 
+  mutate(mes=month(fecha, label=TRUE))
+data_properati <- data_properati %>% 
+  mutate(año=year(fecha))
+data_properati <- data_properati %>% 
+  mutate(año=as.factor(año))
 summary(data_properati)
 ```
 
-¿Como generamos variable mes-año/año-mes?
+*Para un análisis más agregado, necesitamos verlo por año y mes*
 
 ```{r}
-
+data_properati <- data_properati %>% 
+  mutate(tiempo=today()-fecha)
 ```
 
+```{r}
+ggplot(data_properati)+
+  geom_histogram(aes(x=tiempo))
+```
+
+```{r fig.width=16, fig.height=10}
+ggplot(data_properati %>% 
+         filter(año==2020) %>% 
+         group_by(mes) %>% 
+        summarise(precioprom=round(mean(precio))))+
+  geom_line(aes(x=mes, y=precioprom, group = 1))+
+  geom_point(aes(x=mes, y=precioprom))+
+  geom_text(aes(x=mes, y=precioprom+300000, label=precioprom), size=5)+
+  labs(title = "2020", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+```{r fig.width=16, fig.height=10}
+ggplot(data_properati %>% 
+         filter(año==2021) %>% 
+         group_by(mes) %>% 
+        summarise(precioprom=round(mean(precio))))+
+  geom_line(aes(x=mes, y=precioprom, group = 1))+
+  geom_point(aes(x=mes, y=precioprom))+
+  geom_text(aes(x=mes, y=precioprom+300000, label=precioprom), size=5)+
+  labs(title = "2020", 
+       subtitle  = "Fuentes: PROPERATI")
+```
 
 *Continuando, nos aseguramos que tenemos los datos de Argentina, sin outliers*
 
 ```{r}
 data_properati <- st_as_sf(data_properati,coords=c("lon","lat"), crs=4326)
 ```
-
 
 ```{r}
 ggplot(data_properati)+
