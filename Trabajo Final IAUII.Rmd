@@ -132,11 +132,12 @@ ggplot(data_properati)+
 
 ```{r fig.width=16, fig.height=10}
 ggplot(data_properati %>% 
-         group_by(año, mes) %>% 
+         filter(año==2020) %>% 
+         group_by(mes) %>% 
         summarise(precioprom=round(mean(precio))))+
-  geom_line(aes(x=fecha, y=precioprom, group = año))+
-  geom_point(aes(x=fecha, y=precioprom))+
-  geom_text(aes(x=fecha, y=precioprom+300000, label=precioprom), size=5)+
+  geom_line(aes(x=mes, y=precioprom, group = 1))+
+  geom_point(aes(x=mes, y=precioprom))+
+  geom_text(aes(x=mes, y=precioprom+300000, label=precioprom), size=5)+
   labs(title = "2020", 
        subtitle  = "Fuentes: PROPERATI")
 ```
@@ -152,6 +153,13 @@ ggplot(data_properati %>%
   labs(title = "2020", 
        subtitle  = "Fuentes: PROPERATI")
 ```
+
+*Seguir el plan de análisis y graficar*
+
+```{r}
+
+```
+
 
 *Continuando, nos aseguramos que tenemos los datos de Argentina, sin outliers*
 
@@ -274,7 +282,6 @@ ggplot(data = data_properati_CABA_venta) + geom_histogram(aes(x = precio))
 ```{r}
 ggplot(data = data_properati_CABA_alq) + geom_histogram(aes(x = precio))
 ```
-
 
 
 *Ahora realizaremos un mapa coroplético para identificar los barrios según su promedio de precio por m2*
