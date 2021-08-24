@@ -132,12 +132,11 @@ ggplot(data_properati)+
 
 ```{r fig.width=16, fig.height=10}
 ggplot(data_properati %>% 
-         filter(año==2020) %>% 
-         group_by(mes) %>% 
+         group_by(año, mes) %>% 
         summarise(precioprom=round(mean(precio))))+
-  geom_line(aes(x=mes, y=precioprom, group = 1))+
-  geom_point(aes(x=mes, y=precioprom))+
-  geom_text(aes(x=mes, y=precioprom+300000, label=precioprom), size=5)+
+  geom_line(aes(x=fecha, y=precioprom, group = año))+
+  geom_point(aes(x=fecha, y=precioprom))+
+  geom_text(aes(x=fecha, y=precioprom+300000, label=precioprom), size=5)+
   labs(title = "2020", 
        subtitle  = "Fuentes: PROPERATI")
 ```
