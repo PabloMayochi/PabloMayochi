@@ -27,6 +27,17 @@ data_properati <- vroom::vroom("https://storage.googleapis.com/properati-data-pu
 summary(data_properati)
 ```
 
+Procederemos a un plan de limpieza y análisis de datos:
+
+- Filtrado de registros no relevantes
+- Publicaciones sin precio
+- Sin moneda de cotización
+- Sin Latitud y longitud
+- Tipos de propiedades no destinadas a uso de vivienda (Oficinas, garages, entre otros)
+- Para las publicaciones asignar su precio en dólares según la cotización de la fecha
+- Reconversión de la variable FECHA a “Mes - Año”
+
+
 *Hay bastantes columnas y valores por limpiar. Varias columnas no son de nuestro interés, como Título y descripción de la publicación, así como tampoco nos interesan los valores sin ubicación (latitud y longitud) así como las publicaciones sin precio. Adicionalmente, nos interesa quedarnos con un dataset de Argentina, y los tipos de propiedad para vivienda.*
 
 ```{r}
@@ -154,13 +165,6 @@ ggplot(data_properati %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Seguir el plan de análisis y graficar*
-
-```{r}
-
-```
-
-
 *Continuando, nos aseguramos que tenemos los datos de Argentina, sin outliers*
 
 ```{r}
@@ -223,43 +227,6 @@ ggplot()+
        subtitle  = "Fuente: Properati")
 ```
 
-*Veamos como se distribuyen los valores*
-
-```{r}
-options(scipen = 10)
-ggplot(data = data_properati_CABA) + geom_histogram(aes(x = precio))
-```
-
-*Vemos que tenemos valores muy extremos*
-
-```{r}
-data_properati_CABA %>% 
-    top_n(20, price) %>% 
-    arrange(desc(price)) %>% 
-    select(precio, property_type, operation_type, barrio, perimetro)
-```
-
-```{r}
-summary(data_properati_CABA$precio)
-```
-
-*Veamos como evolucionó la cantidad de publicaciones entre venta y alquiler. Primero en la generalidad de Argentina, y luego diferenciaremos CABA y las demás provincias*
-
-```{r message=FALSE, warning=FALSE}
-publicxfechaarg <- data_properati %>% 
-group_by(created_on, operation_type)  %>% 
-summarise(n=n())
-```
-
-```{r}
-
-```
-
-```{r}
-ggplot(publicxfechaarg) +
-geom_line(aes(x=created_on, y=n, color=operation_type))
-```
-
 *Nos será conveniente dividir el dataset en dos. Por un lado venta, y por otro lado alquileres. Fundamentalmente esto se debe a que los Alquileres se publican en pesos y las Ventas de inmuebles en dólares.*
 
 ```{r}
@@ -283,13 +250,145 @@ ggplot(data = data_properati_CABA_venta) + geom_histogram(aes(x = precio))
 ggplot(data = data_properati_CABA_alq) + geom_histogram(aes(x = precio))
 ```
 
+*Ahora procederemos a realizar los gráficos y análisis correspondientes para responder nuestros interrogantes de investigación*
 
-*Ahora realizaremos un mapa coroplético para identificar los barrios según su promedio de precio por m2*
+*Evolución de Capital Federal*
+
+*Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
 
 ```{r}
 
 ```
 
+*Analizar el efecto especulativo en los meses previos a la ley*
+
 ```{r}
 
 ```
+
+*Analizar el costo de alq x m2*
+
+```{r}
+
+```
+
+*Abrir dicho análisis por Barrio, fasetando por mes y año*
+
+```{r}
+
+```
+
+*Evolución del Mercado Inmobiliario de Capital*
+
+*Gráfico de barras con cantidad de publicaciones mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+
+```
+
+*Comparación alquileres vs ventas*
+
+```{r}
+
+```
+
+*Evolución del Mercado de venta de inmubelbes*
+
+*Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+
+```
+
+*Analizar el costo de alq x m2*
+
+```{r}
+
+```
+
+*Abrir dicho análisis por Barrio, fasetando por mes y año*
+
+```{r}
+
+```
+
+*Evolución de las demás Provincias*
+
+*Gráfico de barras con cantidad de publicaciones por Provincia*
+
+```{r}
+
+```
+
+*Unificación de GBA*
+
+```{r}
+
+```
+
+*Seleccionar las 3 provincias con mayor volumen de publicaciones*
+
+```{r}
+
+```
+
+*Provincia 1 - GBA*
+
+*Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+
+```
+
+*Comparación alquileres vs ventas*
+
+```{r}
+
+```
+
+*Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+
+```
+
+*Provincia 1 - Córdoba*
+
+*Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+
+```
+
+*Comparación alquileres vs ventas*
+
+```{r}
+
+```
+
+*Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+
+```
+
+*Provincia 1 - Mendoza*
+
+*Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+
+```
+
+*Comparación alquileres vs ventas*
+
+```{r}
+
+```
+
+*Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+
+```
+
