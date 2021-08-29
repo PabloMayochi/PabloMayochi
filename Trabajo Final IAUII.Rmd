@@ -129,7 +129,7 @@ data_properati <- data_properati %>%
 summary(data_properati)
 ```
 
-*Para un análisis más agregado, necesitamos verlo por año y mes*
+*Para un análisis más agregado, necesitamos verlo por año y mes. Realizamos un gráfico "estándar" que nos servirá para cuando subdividamos el análisis.*
 
 ```{r}
 data_properati <- data_properati %>% 
@@ -165,7 +165,13 @@ ggplot(data_properati %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Continuando, nos aseguramos que tenemos los datos de Argentina, sin outliers*
+*Mejoremos este gráfico*
+
+```{r}
+
+```
+
+*Ya tenemos la variable fecha, y los precios comparables en todos los registros. Continuando, nos aseguramos que tenemos los datos de Argentina, sin filtraciones*
 
 ```{r}
 data_properati <- st_as_sf(data_properati,coords=c("lon","lat"), crs=4326)
@@ -176,6 +182,16 @@ ggplot(data_properati)+
   geom_sf() +
   labs(title = "Mapa base", 
        subtitle  = "Fuentes: Properati")
+```
+
+*Vemos que tenemos un outlier. Deberemos filtrarlo y eliminarlo de nuestro dataset*
+
+```{r}
+
+```
+
+```{r}
+
 ```
 
 *Ahora dividimos nuestro dataset entre las publicaciones que corresponden a Capital Federal y aquellas que no*
