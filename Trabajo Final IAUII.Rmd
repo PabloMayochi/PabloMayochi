@@ -171,6 +171,10 @@ ggplot(data_properati %>%
 
 ```
 
+```{r}
+
+```
+
 *Ya tenemos la variable fecha, y los precios comparables en todos los registros. Continuando, nos aseguramos que tenemos los datos de Argentina, sin filtraciones*
 
 ```{r}
@@ -187,11 +191,15 @@ ggplot(data_properati)+
 *Vemos que tenemos un outlier. Deberemos filtrarlo y eliminarlo de nuestro dataset*
 
 ```{r}
-
-```
-
-```{r}
-
+limites_arg <- read_sf("pais.shp")
+limites_arg <- st_transform(limites_arg, 4326)
+data_properati <- mutate(st_join(data_properati, limites_arg))
+summary(data_properati)
+data_properati <- filter(data_properati, !is.na(entidad))
+ggplot(data_properati)+
+  geom_sf() +
+  labs(title = "Mapa base", 
+       subtitle  = "Fuentes: Properati")
 ```
 
 *Ahora dividimos nuestro dataset entre las publicaciones que corresponden a Capital Federal y aquellas que no*
