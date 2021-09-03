@@ -18,13 +18,13 @@ library(osmdata)
 ```
 
 ```{r message=FALSE, warning=FALSE}
-data_properati <- vroom::vroom("https://storage.googleapis.com/properati-data-public/ar_properties.csv.gz")
+googleapi_data_properati <- vroom::vroom("https://storage.googleapis.com/properati-data-public/ar_properties.csv.gz")
 ```
 
 *Veamos sus columnas y valores resumidos*
 
 ```{r}
-summary(data_properati)
+summary(googleapi_data_properati)
 ```
 
 Procederemos a un plan de limpieza y análisis de datos:
@@ -41,15 +41,15 @@ Procederemos a un plan de limpieza y análisis de datos:
 *Hay bastantes columnas y valores por limpiar. Varias columnas no son de nuestro interés, como Título y descripción de la publicación, así como tampoco nos interesan los valores sin ubicación (latitud y longitud) así como las publicaciones sin precio. Adicionalmente, nos interesa quedarnos con un dataset de Argentina, y los tipos de propiedad para vivienda.*
 
 ```{r}
-data_properati <- filter(data_properati, !is.na(lat), !is.na(lon), !is.na(price), !is.na(currency), l1=="Argentina", !price_period=="Semanal", !currency=="COP", property_type=="Departamento" | property_type=="PH" | property_type=="Casa")
-data_properati <- select(data_properati, !title & !description & !id & !ad_type)
-data_properati <- data_properati %>% mutate(operation_type = case_when(operation_type == "Alquiler temporal" ~ "Alquiler", operation_type == "Alquiler" ~ "Alquiler", operation_type == "Venta" ~ "Venta"))
+clean_data_properati <- filter(googleapi_data_properati, !is.na(lat), !is.na(lon), !is.na(price), !is.na(currency), l1=="Argentina", !price_period=="Semanal", !currency=="COP", property_type=="Departamento" | property_type=="PH" | property_type=="Casa")
+clean_data_properati <- select(clean_data_properati, !title & !description & !id & !ad_type)
+clean_data_properati <- clean_data_properati %>% mutate(operation_type = case_when(operation_type == "Alquiler temporal" ~ "Alquiler", operation_type == "Alquiler" ~ "Alquiler", operation_type == "Venta" ~ "Venta"))
 ```
 
 *Vemos que el dataset bajó considerablemente. Ahora tenemos que convertir las variables de caracteres en factores para poder analizarlos correctamente.*
 
 ```{r}
-data_properati <- data_properati %>% mutate_if(is.character,as.factor)
+clean_data_properati <- clean_data_properati %>% mutate_if(is.character,as.factor)
 summary(data_properati)
 ```
 
@@ -62,127 +62,109 @@ dolar_bcra <- readxl::read_xlsx("DOLAR.BCRA.xlsx")
 *Adjuntemos la cotización que tenia el dolar en cada fecha para la publicación del inmueble en ese día*
 
 ```{r}
-data_properati <- left_join(data_properati, dolar_bcra, by=c("created_on"="Fecha"))
+unif_data_properati <- left_join(clean_data_properati, dolar_bcra, by=c("created_on"="Fecha"))
 ```
 
 ```{r}
-summary(data_properati)
+summary(unif_data_properati)
 ```
 
 *Como a partir del 2020 ya en Argentina existía el recargo del 30% y del 35% a la compra de dólares, empujando la brecha cambiaria del dolar "blue", y considerando que los precios de las propiedades por el efecto especulativo se calcularon históricamente en base al dolar "blue", debiéramos tener en cuenta ese recargo del 65% para el tipo de cambio*
 
 ```{r}
-data_properati <- data_properati %>%
+unif_data_properati <- unif_data_properati %>%
   rename("Cotiz_dolar"="Tipo de Cambio de Referencia - en Pesos - por Dólar")
 ```
 
 ```{r}
-data_properati <- data_properati %>% mutate(Cotiz_dolar=Cotiz_dolar*1.65)
-summary(data_properati$Cotiz_dolar)
+arg_data_properati <- unif_data_properati %>% mutate(Cotiz_dolar=Cotiz_dolar*1.65)
+summary(arg_data_properati$Cotiz_dolar)
 ```
 
 *Vemos que tenemos algunos NA, eso se debe a que la fecha de publicación de la propiedad fue un sábado, domingo, o feriado, por lo que el BCRA no emitió cotización para ese día en su informe. Tendremos que colocar la cotización del día más cercano*
 
 ```{r}
-data_properati %>% arrange(created_on, desc())
-data_properati <- data_properati %>% 
+arg_data_properati %>% arrange(created_on, desc())
+arg_data_properati <- arg_data_properati %>% 
   fill(Cotiz_dolar)
-data_properati <- data_properati %>% 
+arg_data_properati <- arg_data_properati %>% 
   fill(Cotiz_dolar, .direction = "downup")
-summary(data_properati$Cotiz_dolar)
+summary(arg_data_properati$Cotiz_dolar)
 ```
 
 *Llevamos todos los precios a pesos argentinos para trabajar en la misma unidad de medida y poder comparar*
 
 ```{r}
-data_properati <- data_properati %>% mutate(precio = case_when(currency == "USD" ~ price*Cotiz_dolar, currency == "ARS" ~ price))
-summary(data_properati$precio)
+arg_data_properati <- arg_data_properati %>% mutate(precio = case_when(currency == "USD" ~ price*Cotiz_dolar, currency == "ARS" ~ price))
+summary(arg_data_properati$precio)
 ```
 
 ```{r}
 options(scipen = 10)
-ggplot(data = data_properati) + geom_histogram(aes(x = precio))
+ggplot(data = arg_data_properati) + geom_histogram(aes(x = precio))
 ```
 
 *Analizamos la evolución de la variable*
 
 ```{r}
-class(data_properati$created_on)
+class(arg_data_properati$created_on)
 ```
 
 ```{r}
-data_properati <- data_properati %>% 
+arg_data_properati <- arg_data_properati %>% 
   mutate(fecha=as.Date(as.character(as.POSIXct(created_on))))
 ```
 
 ```{r}
-class(data_properati$fecha)
+class(arg_data_properati$fecha)
 ```
 
 ```{r}
-data_properati <- data_properati %>% 
+arg_data_properati <- arg_data_properati %>% 
   mutate(mes=month(fecha, label=TRUE))
-data_properati <- data_properati %>% 
+arg_data_properati <- arg_data_properati %>% 
   mutate(año=year(fecha))
-data_properati <- data_properati %>% 
+arg_data_properati <- arg_data_properati %>% 
   mutate(año=as.factor(año))
-summary(data_properati)
+summary(arg_data_properati)
 ```
 
 *Para un análisis más agregado, necesitamos verlo por año y mes. Realizamos un gráfico "estándar" que nos servirá para cuando subdividamos el análisis.*
 
 ```{r}
-data_properati <- data_properati %>% 
+arg_data_properati <- arg_data_properati %>% 
   mutate(tiempo=today()-fecha)
 ```
 
 ```{r}
-ggplot(data_properati)+
+ggplot(arg_data_properati)+
   geom_histogram(aes(x=tiempo))
 ```
 
 ```{r fig.width=16, fig.height=10}
-ggplot(data_properati %>% 
-         filter(año==2020) %>% 
-         group_by(mes) %>% 
-        summarise(precioprom=round(mean(precio))))+
-  geom_line(aes(x=mes, y=precioprom, group = 1))+
-  geom_point(aes(x=mes, y=precioprom))+
-  geom_text(aes(x=mes, y=precioprom+300000, label=precioprom), size=5)+
-  labs(title = "2020", 
+arg_data_properati <- arg_data_properati %>% 
+  mutate(anio_mes = str_sub(fecha, 1 , 7)) %>% 
+  mutate(x = ymd(glue::glue("{anio_mes}-01")))
+
+arg_data_properati %>% 
+  group_by(x) %>%
+  summarise(precioprom=round(mean(precio))) %>% 
+  ggplot() +
+  geom_line(aes(x=x, y=precioprom))+
+  geom_point(aes(x=x, y=precioprom))+
+  geom_text(aes(x=x, y=precioprom+300000, label=precioprom), size=5)+
+  labs(title = "", 
        subtitle  = "Fuentes: PROPERATI")
-```
-
-```{r fig.width=16, fig.height=10}
-ggplot(data_properati %>% 
-         filter(año==2021) %>% 
-         group_by(mes) %>% 
-        summarise(precioprom=round(mean(precio))))+
-  geom_line(aes(x=mes, y=precioprom, group = 1))+
-  geom_point(aes(x=mes, y=precioprom))+
-  geom_text(aes(x=mes, y=precioprom+300000, label=precioprom), size=5)+
-  labs(title = "2020", 
-       subtitle  = "Fuentes: PROPERATI")
-```
-
-*Mejoremos este gráfico*
-
-```{r}
-
-```
-
-```{r}
-
 ```
 
 *Ya tenemos la variable fecha, y los precios comparables en todos los registros. Continuando, nos aseguramos que tenemos los datos de Argentina, sin filtraciones*
 
 ```{r}
-data_properati <- st_as_sf(data_properati,coords=c("lon","lat"), crs=4326)
+geo_arg_data_properati <- st_as_sf(arg_data_properati,coords=c("lon","lat"), crs=4326)
 ```
 
 ```{r}
-ggplot(data_properati)+
+ggplot(geo_arg_data_properati)+
   geom_sf() +
   labs(title = "Mapa base", 
        subtitle  = "Fuentes: Properati")
@@ -193,10 +175,10 @@ ggplot(data_properati)+
 ```{r}
 limites_arg <- read_sf("pais.shp")
 limites_arg <- st_transform(limites_arg, 4326)
-data_properati <- mutate(st_join(data_properati, limites_arg))
-summary(data_properati)
-data_properati <- filter(data_properati, !is.na(entidad))
-ggplot(data_properati)+
+geo_arg_data_properati <- mutate(st_join(geo_arg_data_properati, limites_arg))
+summary(geo_arg_data_properati)
+geo_arg_data_properati <- filter(geo_arg_data_properati, !is.na(entidad))
+ggplot(geo_arg_data_properati)+
   geom_sf() +
   labs(title = "Mapa base", 
        subtitle  = "Fuentes: Properati")
@@ -205,12 +187,12 @@ ggplot(data_properati)+
 *Ahora dividimos nuestro dataset entre las publicaciones que corresponden a Capital Federal y aquellas que no*
 
 ```{r}
-data_properati_non_CABA <- filter(data_properati, !l2=="Capital Federal")
+data_properati_non_CABA <- filter(geo_arg_data_properati, !l2=="Capital Federal")
 summary(data_properati_non_CABA)
 ```
 
 ```{r}
-data_properati_CABA <- filter(data_properati, l2=="Capital Federal")
+data_properati_CABA <- filter(geo_arg_data_properati, l2=="Capital Federal")
 summary(data_properati_CABA)
 ```
 
