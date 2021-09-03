@@ -5,6 +5,8 @@ date: "26/6/2021"
 output: html_document
 ---
 
+*En el presente trabajo nos proponemos analizar como impactó el aumento de los precios en el mercado de alquileres a partir de la nueva ley de alquileres (Ley 27.551 del Código Civil y Comercial de la Nación) promulgada el 30 de junio de 2020.*
+
 *Importamos el dataset de Properati para analizar la evolución de los precios*
 
 ```{r message=FALSE, warning=FALSE}
@@ -50,7 +52,7 @@ clean_data_properati <- clean_data_properati %>% mutate(operation_type = case_wh
 
 ```{r}
 clean_data_properati <- clean_data_properati %>% mutate_if(is.character,as.factor)
-summary(data_properati)
+summary(clean_data_properati)
 ```
 
 *Tenemos que llevar las publicaciones a una misma unidad de medida monetaria, sea en pesos o en dólares, para poder compararlas por barrio y en el tiempo.*
@@ -119,41 +121,21 @@ arg_data_properati <- arg_data_properati %>%
 class(arg_data_properati$fecha)
 ```
 
-```{r}
-arg_data_properati <- arg_data_properati %>% 
-  mutate(mes=month(fecha, label=TRUE))
-arg_data_properati <- arg_data_properati %>% 
-  mutate(año=year(fecha))
-arg_data_properati <- arg_data_properati %>% 
-  mutate(año=as.factor(año))
-summary(arg_data_properati)
-```
-
 *Para un análisis más agregado, necesitamos verlo por año y mes. Realizamos un gráfico "estándar" que nos servirá para cuando subdividamos el análisis.*
-
-```{r}
-arg_data_properati <- arg_data_properati %>% 
-  mutate(tiempo=today()-fecha)
-```
-
-```{r}
-ggplot(arg_data_properati)+
-  geom_histogram(aes(x=tiempo))
-```
 
 ```{r fig.width=16, fig.height=10}
 arg_data_properati <- arg_data_properati %>% 
-  mutate(anio_mes = str_sub(fecha, 1 , 7)) %>% 
-  mutate(x = ymd(glue::glue("{anio_mes}-01")))
+  mutate(año_mes = str_sub(fecha, 1 , 7)) %>% 
+  mutate(fecha = ymd(glue::glue("{año_mes}-01")))
 
 arg_data_properati %>% 
-  group_by(x) %>%
+  group_by(fecha) %>%
   summarise(precioprom=round(mean(precio))) %>% 
   ggplot() +
-  geom_line(aes(x=x, y=precioprom))+
-  geom_point(aes(x=x, y=precioprom))+
-  geom_text(aes(x=x, y=precioprom+300000, label=precioprom), size=5)+
-  labs(title = "", 
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+300000, label=precioprom), size=5)+
+  labs(title = "Evolución de la variable precio - Prueba de gráfico base", 
        subtitle  = "Fuentes: PROPERATI")
 ```
 
