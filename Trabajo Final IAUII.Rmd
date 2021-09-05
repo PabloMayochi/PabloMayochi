@@ -106,6 +106,27 @@ options(scipen = 10)
 ggplot(data = arg_data_properati) + geom_histogram(aes(x = precio))
 ```
 
+*Generamos la variable de 'precioxm2' que nos servirá para futuros análisis en distintas ciudades*
+
+```{r}
+summary(arg_data_properati$surface_covered)
+```
+
+```{r}
+arg_data_properati$surface_covered[is.na(arg_data_properati$surface_covered)] <- mean(arg_data_properati$surface_covered,na.rm=TRUE)
+summary(arg_data_properati$surface_covered)
+```
+
+```{r}
+arg_data_properati <- arg_data_properati %>% filter(surface_covered>0)
+summary(arg_data_properati$surface_covered)
+```
+
+```{r}
+arg_data_properati <- arg_data_properati %>% mutate(precioxm2 = precio/surface_covered)
+summary(arg_data_properati$precioxm2)
+```
+
 *Analizamos la evolución de la variable*
 
 ```{r}
