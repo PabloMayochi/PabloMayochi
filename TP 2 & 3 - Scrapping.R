@@ -60,7 +60,7 @@ crypt_table %>%
   filter(Volumen_operado > 600) %>% 
   ggplot(., aes(reorder(Crypto, Volumen_operado), Volumen_operado )) +
   geom_bar(stat = "identity", aes(fill = Volumen_operado)) + coord_flip() +
-  ggtitle("Top 10 Monedas operadas seg?n volumen") +
+  ggtitle("Top 10 Monedas operadas segun volumen") +
   xlab("Crypto") + ylab("Volumen_operado") + 
   theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 15),
         axis.title.x = element_text(face = "bold", size =  13),
