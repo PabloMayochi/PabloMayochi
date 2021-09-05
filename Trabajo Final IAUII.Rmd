@@ -1,6 +1,6 @@
 ---
 title: "Como impactó la Nueva Ley de Alquileres en el Mercado Inmobiliario"
-author: "Bardoneschi Gonzalo - Cornudet Victoria - Mayochi Pablo"
+author: "MEU"
 date: "26/6/2021"
 output: html_document
 ---
