@@ -267,7 +267,40 @@ ggplot(data = data_properati_CABA_alq) + geom_histogram(aes(x = precio))
 
 ```{r}
 
+data_properati_CABA_alq %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
 ```
+
+*Vemos que los valores promedio están bastante elevados para lo que son los alquileres en CABA, incluso luego de aumentar por el efecto de la ley.*
+
+```{r}
+
+summary(data_properati_CABA_alq$precio)
+```
+
+*Elpromedio se ve fuertemente impactado por los valores extremos. Intentemos realizarlo con la mediana*
+
+```{r fig.width=20, fig.height=18}
+data_properati_CABA_alq %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Tiene mayor correlación con los precios que hemos visto y vemos en el mercado de alquileres de Capital Federal.*
+
 
 *Analizar el efecto especulativo en los meses previos a la ley*
 
@@ -277,14 +310,56 @@ ggplot(data = data_properati_CABA_alq) + geom_histogram(aes(x = precio))
 
 *Analizar el costo de alq x m2*
 
-```{r}
-
+```{r fig.width=20, fig.height=18}
+data_properati_CABA_alq %>% 
+  group_by(fecha) %>%
+  summarise(preciopromxm2=round(median(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=preciopromxm2))+
+  geom_point(aes(fecha, y=preciopromxm2))+
+  geom_text(aes(fecha, y=preciopromxm2+25, label=preciopromxm2), size=3)+
+  labs(title = "Evolución de la variable precio por m2 - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
 ```
+
+*El precio por m2 se mueve en la misma tendencia*
+
+*Abrir el análisis de precio de alquiler por Barrio*
+
+```{r fig.width=20, fig.height=18}
+preciopromalq <- data_properati_CABA_alq %>%
+  st_set_geometry(NULL) %>%
+  group_by(barrio.x) %>%
+  summarise(preciopromalq=median(precio))
+preciopromalqxbarrio <- left_join(barrios, preciopromalq, by = "barrio.x")
+ggplot()+
+  geom_sf(data=preciopromalqxbarrio, aes(fill=preciopromalq)) +
+  geom_sf_label(data=barrios, aes(label = barrio), size=4) +
+  scale_fill_distiller(palette = "Spectral") +
+  theme_light()+
+    labs(title="TEST",
+       subtitle = "Fuente: Properati")+
+    theme_void()
+```
+
 
 *Abrir dicho análisis por Barrio, fasetando por mes y año*
 
-```{r}
 
+```{r fig.width=20, fig.height=18}
+preciopromalq <- data_properati_CABA_alq %>%
+  st_set_geometry(NULL) %>%
+  group_by(barrio, fecha) %>%
+  summarise(preciopromalq=median(precio))
+preciopromalqxbarrio <- left_join(barrios, preciopromalq, by = "barrio")
+ggplot()+
+  geom_sf(data=preciopromalqxbarrio, aes(fill=preciopromalq)) +
+  geom_sf_label(data=barrios, aes(label = barrio), size=1) +
+  scale_fill_distiller(palette = "Spectral") +
+  theme_light()+
+    labs(title="TEST",
+       subtitle = "Fuente: Properati")+
+    theme_void()+facet_wrap(~fecha)
 ```
 
 *Evolución del Mercado Inmobiliario de Capital*
