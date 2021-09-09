@@ -329,9 +329,9 @@ data_properati_CABA_alq %>%
 ```{r fig.width=20, fig.height=18}
 preciopromalq <- data_properati_CABA_alq %>%
   st_set_geometry(NULL) %>%
-  group_by(barrio.x) %>%
+  group_by(barrio) %>%
   summarise(preciopromalq=median(precio))
-preciopromalqxbarrio <- left_join(barrios, preciopromalq, by = "barrio.x")
+preciopromalqxbarrio <- left_join(barrios, preciopromalq, by = "barrio")
 ggplot()+
   geom_sf(data=preciopromalqxbarrio, aes(fill=preciopromalq)) +
   geom_sf_label(data=barrios, aes(label = barrio), size=4) +
