@@ -276,6 +276,7 @@ data_properati_CABA_alq %>%
   geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
   labs(title = "Evolución de la variable precio - Capital Federal 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
+
 ```
 
 *Vemos que los valores promedio están bastante elevados para lo que son los alquileres en CABA, incluso luego de aumentar por el efecto de la ley.*
@@ -321,6 +322,7 @@ data_properati_CABA_alq %>%
   labs(title = "Evolución de la variable precio por m2 - Capital Federal 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
 ```
+
 
 *El precio por m2 se mueve en la misma tendencia*
 
