@@ -367,22 +367,77 @@ ggplot()+
 *Gráfico de barras con cantidad de publicaciones mes a mes (enero 2020 - mes actual 2021/22)*
 
 ```{r}
-
+ggplot(data_properati_CABA)+
+  geom_bar(aes(x=fecha))
 ```
+
+*Notamos un muy leve decenso en la cantidad de publicaciones, más allá del pico de abril del 2021*
 
 *Comparación alquileres vs ventas*
 
 ```{r}
-
+ggplot(data_properati_CABA)+
+  geom_bar(aes(x=fecha, fill = operation_type))
 ```
 
-*Evolución del Mercado de venta de inmubelbes*
+*Evolución del Mercado de venta de inmuebles*
 
 *Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
 
 ```{r}
-
+data_properati_CABA_venta %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
 ```
+
+*Veamos qué pasa con la mediana*
+
+```{r}
+data_properati_CABA_venta %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Analizar el costo de venta x m2*
+
+```{r}
+data_properati_CABA_venta %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Del mismo modo que lo anterior, veamos qué pasa con la mediana*
+
+```{r}
+data_properati_CABA_venta %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
 
 *Analizar el costo de alq x m2*
 
@@ -475,4 +530,3 @@ ggplot()+
 ```{r}
 
 ```
-fvsdfggsdgsd
