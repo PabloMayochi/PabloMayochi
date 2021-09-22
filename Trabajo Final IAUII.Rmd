@@ -461,13 +461,22 @@ ggplot(data_properati_non_CABA)+
 *Unificación de GBA*
 
 ```{r}
-
+data_properati_non_CABA$l2 <- as.character(data_properati_non_CABA$l2)
+data_properati_non_CABA$l2[data_properati_non_CABA$l2 == "Buenos Aires Interior"] <- "Provincia de Buenos Aires"
+data_properati_non_CABA$l2[data_properati_non_CABA$l2 == "Buenos Aires Costa Atlántica"] <- "Provincia de Buenos Aires"
+data_properati_non_CABA$l2[data_properati_non_CABA$l2 == "Bs.As. G.B.A. Zona Sur"] <- "Provincia de Buenos Aires"
+data_properati_non_CABA$l2[data_properati_non_CABA$l2 == "Bs.As. G.B.A. Zona Oeste"] <- "Provincia de Buenos Aires"
+data_properati_non_CABA$l2[data_properati_non_CABA$l2 == "Bs.As. G.B.A. Zona Norte"] <- "Provincia de Buenos Aires"
+data_properati_non_CABA$l2 <- as.factor(data_properati_non_CABA$l2)
+summary(data_properati_non_CABA)
 ```
 
 *Seleccionar las 3 provincias con mayor volumen de publicaciones*
 
 ```{r}
-
+ggplot(data_properati_non_CABA)+
+  geom_bar(aes(x= l2, fill = l2))+
+  coord_flip()
 ```
 
 *Provincia 1 - GBA*
@@ -475,19 +484,40 @@ ggplot(data_properati_non_CABA)+
 *Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
 
 ```{r}
-
+data_properati_non_CABA %>% 
+  filter(l2 == "Provincia de Buenos Aires") %>% 
+  filter(operation_type == "Alquiler") %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio de alquiler - Provincia de Buenos Aires 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
 ```
 
 *Comparación alquileres vs ventas*
 
 ```{r}
-
+ggplot(data_properati_non_CABA %>% filter(l2 == "Provincia de Buenos Aires"))+
+  geom_bar(aes(x=fecha, fill = operation_type))
 ```
 
 *Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
 
 ```{r}
-
+data_properati_non_CABA %>% 
+  filter(l2 == "Provincia de Buenos Aires") %>% 
+  filter(operation_type == "Venta") %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio de venta - Provincia de Buenos Aires 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
 ```
 
 *Provincia 1 - Córdoba*
@@ -495,38 +525,80 @@ ggplot(data_properati_non_CABA)+
 *Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
 
 ```{r}
-
+data_properati_non_CABA %>% 
+  filter(l2 == "Córdoba") %>% 
+  filter(operation_type == "Alquiler") %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio de alquiler - Provincia de Córdoba - 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
 ```
 
 *Comparación alquileres vs ventas*
 
 ```{r}
-
+ggplot(data_properati_non_CABA %>% filter(l2 == "Córdoba"))+
+  geom_bar(aes(x=fecha, fill = operation_type))
 ```
 
 *Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
 
 ```{r}
-
+data_properati_non_CABA %>% 
+  filter(l2 == "Córdoba") %>% 
+  filter(operation_type == "Venta") %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio de venta - Provincia de Córdoba 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Provincia 1 - Mendoza*
+*Provincia 1 - Santa Fe*
 
 *Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
 
 ```{r}
-
+data_properati_non_CABA %>% 
+  filter(l2 == "Santa Fe") %>% 
+  filter(operation_type == "Alquiler") %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio de alquiler - Provincia de Santa Fe - 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
 ```
 
 *Comparación alquileres vs ventas*
 
 ```{r}
-
+ggplot(data_properati_non_CABA %>% filter(l2 == "Santa Fe"))+
+  geom_bar(aes(x=fecha, fill = operation_type))
 ```
 
 *Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
 
 ```{r}
-
+data_properati_non_CABA %>% 
+  filter(l2 == "Santa Fe") %>% 
+  filter(operation_type == "Venta") %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio de venta - Provincia de Santa Fe 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
 ```
 feli github te odia
