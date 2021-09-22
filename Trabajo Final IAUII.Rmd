@@ -453,7 +453,9 @@ data_properati_CABA_alq %>%
 *Gráfico de barras con cantidad de publicaciones por Provincia*
 
 ```{r}
-
+ggplot(data_properati_non_CABA)+
+  geom_bar(aes(x= l2, fill = l2))+
+  coord_flip()
 ```
 
 *Unificación de GBA*
