@@ -413,7 +413,6 @@ data_properati_CABA_venta %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-
 *Analizar el costo de alq x m2*
 
 ```{r}
@@ -440,12 +439,6 @@ data_properati_CABA_alq %>%
   geom_text(aes(fecha, y=precioprom+50, label=precioprom), size=3)+
   labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
-```
-
-*Abrir dicho análisis por Barrio, fasetando por mes y año*
-
-```{r}
-
 ```
 
 *Evolución de las demás Provincias*
@@ -601,4 +594,3 @@ data_properati_non_CABA %>%
   labs(title = "Evolución de la variable precio de venta - Provincia de Santa Fe 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
 ```
-feli github te odia
