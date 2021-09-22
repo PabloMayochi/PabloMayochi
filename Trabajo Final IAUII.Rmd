@@ -179,7 +179,6 @@ ggplot(geo_arg_data_properati)+
 limites_arg <- read_sf("pais.shp")
 limites_arg <- st_transform(limites_arg, 4326)
 geo_arg_data_properati <- mutate(st_join(geo_arg_data_properati, limites_arg))
-summary(geo_arg_data_properati)
 geo_arg_data_properati <- filter(geo_arg_data_properati, !is.na(entidad))
 ggplot(geo_arg_data_properati)+
   geom_sf() +
@@ -191,12 +190,7 @@ ggplot(geo_arg_data_properati)+
 
 ```{r}
 data_properati_non_CABA <- filter(geo_arg_data_properati, !l2=="Capital Federal")
-summary(data_properati_non_CABA)
-```
-
-```{r}
 data_properati_CABA <- filter(geo_arg_data_properati, l2=="Capital Federal")
-summary(data_properati_CABA)
 ```
 
 *Finalmente tenemos el dataset con el que queremos trabajar nuestros análisis. Sin embargo, tenemos que mapearlo primero para asegurarnos de ello.*
@@ -220,7 +214,7 @@ ggplot()+
 
 ```{r}
 data_properati_CABA <- mutate(st_join(data_properati_CABA, barrios))
-data_properati_CABA <- filter(data_properati_CABA, !is.na(viebarrio))
+data_properati_CABA <- filter(data_properati_CABA, !is.na(barrio))
 ```
 
 *Mapeamos nuevamente*
@@ -244,14 +238,6 @@ data_properati_CABA_alq <- filter(data_properati_CABA, !operation_type == "Venta
 ```
 
 ```{r}
-summary(data_properati_CABA_venta)
-```
-
-```{r}
-summary(data_properati_CABA_alq)
-```
-
-```{r}
 ggplot(data = data_properati_CABA_venta) + geom_histogram(aes(x = precio))
 ```
 
@@ -266,7 +252,6 @@ ggplot(data = data_properati_CABA_alq) + geom_histogram(aes(x = precio))
 *Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
 
 ```{r}
-
 data_properati_CABA_alq %>% 
   group_by(fecha) %>%
   summarise(precioprom=round(mean(precio))) %>% 
@@ -281,7 +266,6 @@ data_properati_CABA_alq %>%
 *Vemos que los valores promedio están bastante elevados para lo que son los alquileres en CABA, incluso luego de aumentar por el efecto de la ley.*
 
 ```{r}
-
 summary(data_properati_CABA_alq$precio)
 ```
 
@@ -300,13 +284,6 @@ data_properati_CABA_alq %>%
 ```
 
 *Tiene mayor correlación con los precios que hemos visto y vemos en el mercado de alquileres de Capital Federal.*
-
-
-*Analizar el efecto especulativo en los meses previos a la ley*
-
-```{r}
-
-```
 
 *Analizar el costo de alq x m2*
 
@@ -342,9 +319,7 @@ ggplot()+
     theme_void()
 ```
 
-
 *Abrir dicho análisis por Barrio, fasetando por mes y año*
-
 
 ```{r fig.width=20, fig.height=18}
 preciopromalq <- data_properati_CABA_alq %>%
