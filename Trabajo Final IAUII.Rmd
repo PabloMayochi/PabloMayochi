@@ -220,7 +220,7 @@ ggplot()+
 
 ```{r}
 data_properati_CABA <- mutate(st_join(data_properati_CABA, barrios))
-data_properati_CABA <- filter(data_properati_CABA, !is.na(barrio))
+data_properati_CABA <- filter(data_properati_CABA, !is.na(viebarrio))
 ```
 
 *Mapeamos nuevamente*
@@ -442,7 +442,29 @@ data_properati_CABA_venta %>%
 *Analizar el costo de alq x m2*
 
 ```{r}
+data_properati_CABA_alq %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+50, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
 
+*Del mismo modo que lo anterior, veamos qué pasa con la mediana*
+
+```{r}
+data_properati_CABA_alq %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+50, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
 ```
 
 *Abrir dicho análisis por Barrio, fasetando por mes y año*
