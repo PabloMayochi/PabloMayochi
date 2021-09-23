@@ -148,7 +148,6 @@ class(arg_data_properati$fecha)
 arg_data_properati <- arg_data_properati %>% 
   mutate(año_mes = str_sub(fecha, 1 , 7)) %>% 
   mutate(fecha = ymd(glue::glue("{año_mes}-01")))
-
 arg_data_properati %>% 
   group_by(fecha) %>%
   summarise(precioprom=round(mean(precio))) %>% 
@@ -263,7 +262,7 @@ data_properati_CABA_alq %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Vemos que los valores promedio están bastante elevados para lo que son los alquileres en CABA, incluso luego de aumentar por el efecto de la ley.*
+*Conclusiones del gráfico: Vemos que los valores promedio están bastante elevados para lo que son los alquileres en CABA, incluso luego de aumentar por el efecto de la ley.*
 
 ```{r}
 summary(data_properati_CABA_alq$precio)
@@ -283,7 +282,7 @@ data_properati_CABA_alq %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Tiene mayor correlación con los precios que hemos visto y vemos en el mercado de alquileres de Capital Federal.*
+*Conclusiones del gráfico: Tiene mayor correlación con los precios que hemos visto y vemos en el mercado de alquileres de Capital Federal.*
 
 *Analizar el costo de alq x m2*
 
@@ -299,7 +298,7 @@ data_properati_CABA_alq %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*El precio por m2 se mueve en la misma tendencia*
+*Conclusiones del gráfico: El precio por m2 se mueve en la misma tendencia.*
 
 *Abrir el análisis de precio de alquiler por Barrio*
 
@@ -319,6 +318,8 @@ ggplot()+
     theme_void()
 ```
 
+*Conclusiones del gráfico: *
+
 *Abrir dicho análisis por Barrio, fasetando por mes y año*
 
 ```{r fig.width=20, fig.height=18}
@@ -336,6 +337,8 @@ ggplot()+
        subtitle = "Fuente: Properati")+
     theme_void()+facet_wrap(~fecha)
 ```
+
+*Conclusiones del gráfico: *
 
 *Evolución del Mercado Inmobiliario de Capital*
 
@@ -355,6 +358,8 @@ ggplot(data_properati_CABA)+
   geom_bar(aes(x=fecha, fill = operation_type))
 ```
 
+*Conclusiones del gráfico: *
+
 *Evolución del Mercado de venta de inmuebles*
 
 *Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
@@ -371,6 +376,8 @@ data_properati_CABA_venta %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
+*Conclusiones del gráfico: *
+
 *Veamos qué pasa con la mediana*
 
 ```{r}
@@ -384,6 +391,8 @@ data_properati_CABA_venta %>%
   labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
 ```
+
+*Conclusiones del gráfico: *
 
 *Analizar el costo de venta x m2*
 
@@ -399,6 +408,8 @@ data_properati_CABA_venta %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
+*Conclusiones del gráfico: *
+
 *Del mismo modo que lo anterior, veamos qué pasa con la mediana*
 
 ```{r}
@@ -412,6 +423,8 @@ data_properati_CABA_venta %>%
   labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
 ```
+
+*Conclusiones del gráfico: *
 
 *Analizar el costo de alq x m2*
 
@@ -427,6 +440,8 @@ data_properati_CABA_alq %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
+*Conclusiones del gráfico: *
+
 *Del mismo modo que lo anterior, veamos qué pasa con la mediana*
 
 ```{r}
@@ -441,6 +456,8 @@ data_properati_CABA_alq %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
+*Conclusiones del gráfico: *
+
 *Evolución de las demás Provincias*
 
 *Gráfico de barras con cantidad de publicaciones por Provincia*
@@ -450,6 +467,8 @@ ggplot(data_properati_non_CABA)+
   geom_bar(aes(x= l2, fill = l2))+
   coord_flip()
 ```
+
+*Conclusiones del gráfico: *
 
 *Unificación de GBA*
 
@@ -472,6 +491,8 @@ ggplot(data_properati_non_CABA)+
   coord_flip()
 ```
 
+*Conclusiones del gráfico: *
+
 *Provincia 1 - GBA*
 
 *Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
@@ -490,12 +511,16 @@ data_properati_non_CABA %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
+*Conclusiones del gráfico: *
+
 *Comparación alquileres vs ventas*
 
 ```{r}
 ggplot(data_properati_non_CABA %>% filter(l2 == "Provincia de Buenos Aires"))+
   geom_bar(aes(x=fecha, fill = operation_type))
 ```
+
+*Conclusiones del gráfico: *
 
 *Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
 
@@ -512,6 +537,8 @@ data_properati_non_CABA %>%
   labs(title = "Evolución de la variable precio de venta - Provincia de Buenos Aires 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
 ```
+
+*Conclusiones del gráfico: *
 
 *Provincia 1 - Córdoba*
 
@@ -531,12 +558,16 @@ data_properati_non_CABA %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
+*Conclusiones del gráfico: *
+
 *Comparación alquileres vs ventas*
 
 ```{r}
 ggplot(data_properati_non_CABA %>% filter(l2 == "Córdoba"))+
   geom_bar(aes(x=fecha, fill = operation_type))
 ```
+
+*Conclusiones del gráfico: *
 
 *Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
 
@@ -553,6 +584,8 @@ data_properati_non_CABA %>%
   labs(title = "Evolución de la variable precio de venta - Provincia de Córdoba 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
 ```
+
+*Conclusiones del gráfico: *
 
 *Provincia 1 - Santa Fe*
 
@@ -572,12 +605,16 @@ data_properati_non_CABA %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
+*Conclusiones del gráfico: *
+
 *Comparación alquileres vs ventas*
 
 ```{r}
 ggplot(data_properati_non_CABA %>% filter(l2 == "Santa Fe"))+
   geom_bar(aes(x=fecha, fill = operation_type))
 ```
+
+*Conclusiones del gráfico: *
 
 *Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
 
@@ -594,3 +631,5 @@ data_properati_non_CABA %>%
   labs(title = "Evolución de la variable precio de venta - Provincia de Santa Fe 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
 ```
+
+*Conclusiones del gráfico: *
