@@ -270,7 +270,7 @@ summary(data_properati_CABA_alq$precio)
 
 *Elpromedio se ve fuertemente impactado por los valores extremos. Intentemos realizarlo con la mediana*
 
-```{r fig.width=20, fig.height=18}
+```{r}
 data_properati_CABA_alq %>% 
   group_by(fecha) %>%
   summarise(precioprom=round(median(precio))) %>% 
@@ -286,7 +286,7 @@ data_properati_CABA_alq %>%
 
 *Analizar el costo de alq x m2*
 
-```{r fig.width=20, fig.height=18}
+```{r}
 data_properati_CABA_alq %>% 
   group_by(fecha) %>%
   summarise(preciopromxm2=round(median(precioxm2))) %>% 
@@ -313,7 +313,7 @@ ggplot()+
   geom_sf_label(data=barrios, aes(label = barrio), size=4) +
   scale_fill_distiller(palette = "Spectral") +
   theme_light()+
-    labs(title="TEST",
+    labs(title="Precio promedio por Barrio en CABA - 2020-2021",
        subtitle = "Fuente: Properati")+
     theme_void()
 ```
@@ -333,7 +333,7 @@ ggplot()+
   geom_sf_label(data=barrios, aes(label = barrio), size=1) +
   scale_fill_distiller(palette = "Spectral") +
   theme_light()+
-    labs(title="TEST",
+    labs(title="Precio promedio por Barrio en CABA - 2020-2021",
        subtitle = "Fuente: Properati")+
     theme_void()+facet_wrap(~fecha)
 ```
@@ -633,3 +633,6 @@ data_properati_non_CABA %>%
 ```
 
 *Conclusiones del gráfico: *
+
+*Conclusiones Finales del Análisis: Como impactó la Nueva Ley de Alquileres en el Mercado Inmobiliario*
+
