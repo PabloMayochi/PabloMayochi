@@ -268,7 +268,30 @@ data_properati_CABA_alq %>%
 summary(data_properati_CABA_alq$precio)
 ```
 
-*Elpromedio se ve fuertemente impactado por los valores extremos. Intentemos realizarlo con la mediana*
+*Nos guardamos el corte del tercer quintil para omitir los valores extremos del análisis*
+
+```{r}
+variableprecioCABAalq <- summary(data_properati_CABA_alq$precio)
+Q3CABAalq <- variableprecioCABAalq[5]
+Q3CABAalq
+```
+
+*Elpromedio se ve fuertemente impactado por los valores extremos. Intentemos realizarlo cortando por el tercer quintil o utilizando la mediana*
+
+```{r}
+data_properati_CABA_alq %>% 
+  filter(precio<Q3CABAalq) %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+500, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Hacemos el análisis utilizando la mediana*
 
 ```{r}
 data_properati_CABA_alq %>% 
@@ -281,6 +304,22 @@ data_properati_CABA_alq %>%
   labs(title = "Evolución de la variable precio - Capital Federal 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
 ```
+
+*Sumamos el corte por el Q3*
+
+```{r}
+data_properati_CABA_alq %>% 
+  filter(precio<Q3CABAalq) %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
 
 *Conclusiones del gráfico: Tiene mayor correlación con los precios que hemos visto y vemos en el mercado de alquileres de Capital Federal.*
 
@@ -298,12 +337,28 @@ data_properati_CABA_alq %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
+*Qué sucede si cortamos la muestra en Q3*
+
+```{r}
+data_properati_CABA_alq %>% 
+  filter(precio<Q3CABAalq) %>% 
+  group_by(fecha) %>%
+  summarise(preciopromxm2=round(median(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=preciopromxm2))+
+  geom_point(aes(fecha, y=preciopromxm2))+
+  geom_text(aes(fecha, y=preciopromxm2+25, label=preciopromxm2), size=3)+
+  labs(title = "Evolución de la variable precio por m2 - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
 *Conclusiones del gráfico: El precio por m2 se mueve en la misma tendencia.*
 
 *Abrir el análisis de precio de alquiler por Barrio*
 
 ```{r fig.width=20, fig.height=18}
 preciopromalq <- data_properati_CABA_alq %>%
+  filter(precio<Q3CABAalq) %>% 
   st_set_geometry(NULL) %>%
   group_by(barrio) %>%
   summarise(preciopromalq=median(precio))
@@ -324,6 +379,7 @@ ggplot()+
 
 ```{r fig.width=20, fig.height=18}
 preciopromalq <- data_properati_CABA_alq %>%
+  filter(precio<Q3CABAalq) %>% 
   st_set_geometry(NULL) %>%
   group_by(barrio, fecha) %>%
   summarise(preciopromalq=median(precio))
@@ -365,6 +421,12 @@ ggplot(data_properati_CABA)+
 *Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
 
 ```{r}
+variableprecioCABAventa <- summary(data_properati_CABA_venta$precio)
+Q3CABAventa <- variableprecioCABAventa[5]
+Q3CABAventa
+```
+
+```{r}
 data_properati_CABA_venta %>% 
   group_by(fecha) %>%
   summarise(precioprom=round(mean(precio))) %>% 
@@ -375,6 +437,22 @@ data_properati_CABA_venta %>%
   labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
 ```
+
+*Sumamos nuestro corte en Q3*
+
+```{r}
+data_properati_CABA_venta %>% 
+  filter(precio<Q3CABAventa) %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
 
 *Conclusiones del gráfico: *
 
@@ -392,12 +470,40 @@ data_properati_CABA_venta %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
+*Cortamos en Q3*
+
+```{r}
+data_properati_CABA_venta %>% 
+  filter(precio<Q3CABAventa) %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+100000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
 *Conclusiones del gráfico: *
 
 *Analizar el costo de venta x m2*
 
 ```{r}
 data_properati_CABA_venta %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+```{r}
+data_properati_CABA_venta %>% 
+  filter(precio<Q3CABAventa) %>% 
   group_by(fecha) %>%
   summarise(precioprom=round(mean(precioxm2))) %>% 
   ggplot() +
@@ -425,6 +531,46 @@ data_properati_CABA_venta %>%
 ```
 
 *Conclusiones del gráfico: *
+
+*Abrir el análisis de precio de venta por Barrio*
+
+```{r fig.width=20, fig.height=18}
+preciopromalq <- data_properati_CABA_venta %>%
+  filter(precio<Q3CABAventa) %>% 
+  st_set_geometry(NULL) %>%
+  group_by(barrio, fecha) %>%
+  summarise(preciopromvta=median(precio))
+preciopromvtaxbarrio <- left_join(barrios, preciopromvta, by = "barrio")
+ggplot()+
+  geom_sf(data=preciopromvtaxbarrio, aes(fill=preciopromvta)) +
+  geom_sf_label(data=barrios, aes(label = barrio), size=4) +
+  scale_fill_distiller(palette = "Spectral") +
+  theme_light()+
+    labs(title="Precio promedio por Barrio en CABA - 2020-2021",
+       subtitle = "Fuente: Properati")+
+    theme_void()
+```
+
+*Conclusiones del gráfico: *
+
+*Abrir dicho análisis por Barrio, fasetando por mes y año*
+
+```{r fig.width=20, fig.height=18}
+preciopromvta <- data_properati_CABA_venta %>%
+  filter(precio<Q3CABAventa) %>% 
+  st_set_geometry(NULL) %>%
+  group_by(barrio, fecha) %>%
+  summarise(preciopromvta=median(precio))
+preciopromvtaxbarrio <- left_join(barrios, preciopromvta, by = "barrio")
+ggplot()+
+  geom_sf(data=preciopromvtaxbarrio, aes(fill=preciopromvta)) +
+  geom_sf_label(data=barrios, aes(label = barrio), size=1) +
+  scale_fill_distiller(palette = "Spectral") +
+  theme_light()+
+    labs(title="Precio promedio por Barrio en CABA - 2020-2021",
+       subtitle = "Fuente: Properati")+
+    theme_void()+facet_wrap(~fecha)
+```
 
 *Analizar el costo de alq x m2*
 
@@ -506,7 +652,7 @@ data_properati_non_CABA %>%
   ggplot() +
   geom_line(aes(fecha, y=precioprom))+
   geom_point(aes(fecha, y=precioprom))+
-  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  geom_text(aes(fecha, y=precioprom+10000, label=precioprom), size=3)+
   labs(title = "Evolución de la variable precio de alquiler - Provincia de Buenos Aires 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
 ```
