@@ -535,7 +535,7 @@ data_properati_CABA_venta %>%
 *Abrir el análisis de precio de venta por Barrio*
 
 ```{r fig.width=20, fig.height=18}
-preciopromalq <- data_properati_CABA_venta %>%
+preciopromvta <- data_properati_CABA_venta %>%
   filter(precio<Q3CABAventa) %>% 
   st_set_geometry(NULL) %>%
   group_by(barrio, fecha) %>%
