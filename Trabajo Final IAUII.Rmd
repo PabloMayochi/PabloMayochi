@@ -291,6 +291,8 @@ data_properati_CABA_alq %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
+*Conclusiones del gráfico: Vemos que la tendencia ascendente del precio promedio es menos abrupta en entre Jul 2020 y oct 2020, a partir de alli la tendencia es mas pronunciada.*
+
 *Hacemos el análisis utilizando la mediana*
 
 ```{r}
@@ -304,6 +306,8 @@ data_properati_CABA_alq %>%
   labs(title = "Evolución de la variable precio - Capital Federal 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
 ```
+
+*Conclusiones del gráfico: el salto ascendente en el precio promedio se da justo antes de Oct del 2 .*
 
 *Sumamos el corte por el Q3*
 
@@ -336,6 +340,8 @@ data_properati_CABA_alq %>%
   labs(title = "Evolución de la variable precio por m2 - Capital Federal 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
 ```
+
+*Conclusiones del gráfico: Vemos una tendencia ascendente a partir de agosto 2020, se mueve en la misma tendencia.*
 
 *Qué sucede si cortamos la muestra en Q3*
 
@@ -373,7 +379,7 @@ ggplot()+
     theme_void()
 ```
 
-*Conclusiones del gráfico: *
+*Conclusiones del gráfico: el corredor norte hasta puerto madero como lider se caracterizan por tener el mayor precio promedio de alquiler, como lo fue historicamente*
 
 *Abrir dicho análisis por Barrio, fasetando por mes y año*
 
@@ -394,7 +400,7 @@ ggplot()+
     theme_void()+facet_wrap(~fecha)
 ```
 
-*Conclusiones del gráfico: *
+*Conclusiones del gráfico: Puerto madero fue perdiendo valor y zona oeste y sur de los barrios de la capital se fueron encareciendo, equiparandose con el corredor norte. La diferencia no es tan marcada como antes. *
 
 *Evolución del Mercado Inmobiliario de Capital*
 
