@@ -1,0 +1,808 @@
+---
+title: "Como impactó la Nueva Ley de Alquileres en el Mercado Inmobiliario"
+author: "Bardoneschi Gonzalo - Bernassar Felicitas - Cornudet Victoria - Mayochi Pablo"
+date: "26/6/2021"
+output: html_document
+---
+
+*En el presente trabajo nos proponemos analizar como impactó el aumento de los precios en el mercado de alquileres a partir de la nueva ley de alquileres (Ley 27.551 del Código Civil y Comercial de la Nación) promulgada el 30 de junio de 2020.*
+
+*Importamos el dataset de Properati para analizar la evolución de los precios*
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(ggmap)
+library(lubridate)
+library(dplyr)
+library(osmdata)
+```
+
+```{r message=FALSE, warning=FALSE}
+googleapi_data_properati <- vroom::vroom("https://storage.googleapis.com/properati-data-public/ar_properties.csv.gz")
+```
+
+*Veamos sus columnas y valores resumidos*
+
+```{r}
+summary(googleapi_data_properati)
+```
+
+Procederemos a un plan de limpieza y análisis de datos:
+
+- Filtrado de registros no relevantes
+- Publicaciones sin precio
+- Sin moneda de cotización
+- Sin Latitud y longitud
+- Tipos de propiedades no destinadas a uso de vivienda (Oficinas, garages, entre otros)
+- Para las publicaciones asignar su precio en dólares según la cotización de la fecha
+- Reconversión de la variable FECHA a “Mes - Año”
+
+
+*Hay bastantes columnas y valores por limpiar. Varias columnas no son de nuestro interés, como Título y descripción de la publicación, así como tampoco nos interesan los valores sin ubicación (latitud y longitud) así como las publicaciones sin precio. Adicionalmente, nos interesa quedarnos con un dataset de Argentina, y los tipos de propiedad para vivienda.*
+
+```{r}
+clean_data_properati <- filter(googleapi_data_properati, !is.na(lat), !is.na(lon), !is.na(price), !is.na(currency), l1=="Argentina", !price_period=="Semanal", !currency=="COP", property_type=="Departamento" | property_type=="PH" | property_type=="Casa")
+clean_data_properati <- select(clean_data_properati, !title & !description & !id & !ad_type)
+clean_data_properati <- clean_data_properati %>% mutate(operation_type = case_when(operation_type == "Alquiler temporal" ~ "Alquiler", operation_type == "Alquiler" ~ "Alquiler", operation_type == "Venta" ~ "Venta"))
+```
+
+*Vemos que el dataset bajó considerablemente. Ahora tenemos que convertir las variables de caracteres en factores para poder analizarlos correctamente.*
+
+```{r}
+clean_data_properati <- clean_data_properati %>% mutate_if(is.character,as.factor)
+summary(clean_data_properati)
+```
+
+*Tenemos que llevar las publicaciones a una misma unidad de medida monetaria, sea en pesos o en dólares, para poder compararlas por barrio y en el tiempo.*
+
+```{r}
+dolar_bcra <- readxl::read_xlsx("DOLAR.BCRA.xlsx")
+```
+
+*Adjuntemos la cotización que tenia el dolar en cada fecha para la publicación del inmueble en ese día*
+
+```{r}
+unif_data_properati <- left_join(clean_data_properati, dolar_bcra, by=c("created_on"="Fecha"))
+```
+
+```{r}
+summary(unif_data_properati)
+```
+
+*Como a partir del 2020 ya en Argentina existía el recargo del 30% y del 35% a la compra de dólares, empujando la brecha cambiaria del dolar "blue", y considerando que los precios de las propiedades por el efecto especulativo se calcularon históricamente en base al dolar "blue", debiéramos tener en cuenta ese recargo del 65% para el tipo de cambio*
+
+```{r}
+unif_data_properati <- unif_data_properati %>%
+  rename("Cotiz_dolar"="Tipo de Cambio de Referencia - en Pesos - por Dólar")
+```
+
+```{r}
+arg_data_properati <- unif_data_properati %>% mutate(Cotiz_dolar=Cotiz_dolar*1.65)
+summary(arg_data_properati$Cotiz_dolar)
+```
+
+*Vemos que tenemos algunos NA, eso se debe a que la fecha de publicación de la propiedad fue un sábado, domingo, o feriado, por lo que el BCRA no emitió cotización para ese día en su informe. Tendremos que colocar la cotización del día más cercano*
+
+```{r}
+arg_data_properati %>% arrange(created_on, desc())
+arg_data_properati <- arg_data_properati %>% 
+  fill(Cotiz_dolar)
+arg_data_properati <- arg_data_properati %>% 
+  fill(Cotiz_dolar, .direction = "downup")
+summary(arg_data_properati$Cotiz_dolar)
+```
+
+*Llevamos todos los precios a pesos argentinos para trabajar en la misma unidad de medida y poder comparar*
+
+```{r}
+arg_data_properati <- arg_data_properati %>% mutate(precio = case_when(currency == "USD" ~ price*Cotiz_dolar, currency == "ARS" ~ price))
+summary(arg_data_properati$precio)
+```
+
+```{r}
+options(scipen = 10)
+ggplot(data = arg_data_properati) + geom_histogram(aes(x = precio))
+```
+
+*Generamos la variable de 'precioxm2' que nos servirá para futuros análisis en distintas ciudades*
+
+```{r}
+summary(arg_data_properati$surface_covered)
+```
+
+```{r}
+arg_data_properati$surface_covered[is.na(arg_data_properati$surface_covered)] <- mean(arg_data_properati$surface_covered,na.rm=TRUE)
+summary(arg_data_properati$surface_covered)
+```
+
+```{r}
+arg_data_properati <- arg_data_properati %>% filter(surface_covered>0)
+summary(arg_data_properati$surface_covered)
+```
+
+```{r}
+arg_data_properati <- arg_data_properati %>% mutate(precioxm2 = precio/surface_covered)
+summary(arg_data_properati$precioxm2)
+```
+
+*Analizamos la evolución de la variable*
+
+```{r}
+class(arg_data_properati$created_on)
+```
+
+```{r}
+arg_data_properati <- arg_data_properati %>% 
+  mutate(fecha=as.Date(as.character(as.POSIXct(created_on))))
+```
+
+```{r}
+class(arg_data_properati$fecha)
+```
+
+*Para un análisis más agregado, necesitamos verlo por año y mes. Realizamos un gráfico "estándar" que nos servirá para cuando subdividamos el análisis.*
+
+```{r fig.width=16, fig.height=10}
+arg_data_properati <- arg_data_properati %>% 
+  mutate(año_mes = str_sub(fecha, 1 , 7)) %>% 
+  mutate(fecha = ymd(glue::glue("{año_mes}-01")))
+arg_data_properati %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+300000, label=precioprom), size=5)+
+  labs(title = "Evolución de la variable precio - Prueba de gráfico base", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Ya tenemos la variable fecha, y los precios comparables en todos los registros. Continuando, nos aseguramos que tenemos los datos de Argentina, sin filtraciones*
+
+```{r}
+geo_arg_data_properati <- st_as_sf(arg_data_properati,coords=c("lon","lat"), crs=4326)
+```
+
+```{r}
+ggplot(geo_arg_data_properati)+
+  geom_sf() +
+  labs(title = "Mapa base", 
+       subtitle  = "Fuentes: Properati")
+```
+
+*Vemos que tenemos un outlier. Deberemos filtrarlo y eliminarlo de nuestro dataset*
+
+```{r}
+limites_arg <- read_sf("pais.shp")
+limites_arg <- st_transform(limites_arg, 4326)
+geo_arg_data_properati <- mutate(st_join(geo_arg_data_properati, limites_arg))
+geo_arg_data_properati <- filter(geo_arg_data_properati, !is.na(entidad))
+ggplot(geo_arg_data_properati)+
+  geom_sf() +
+  labs(title = "Mapa base", 
+       subtitle  = "Fuentes: Properati")
+```
+
+*Ahora dividimos nuestro dataset entre las publicaciones que corresponden a Capital Federal y aquellas que no*
+
+```{r}
+data_properati_non_CABA <- filter(geo_arg_data_properati, !l2=="Capital Federal")
+data_properati_CABA <- filter(geo_arg_data_properati, l2=="Capital Federal")
+```
+
+*Finalmente tenemos el dataset con el que queremos trabajar nuestros análisis. Sin embargo, tenemos que mapearlo primero para asegurarnos de ello.*
+
+```{r}
+barrios <- read_sf("barrios.geojson")
+barrios <- st_transform(barrios, 4326)
+```
+
+```{r fig.width=20, fig.height=18}
+ggplot()+
+  geom_sf(data=barrios) +
+  geom_sf(data=data_properati_CABA) +
+  theme_minimal() +
+  theme(legend.title=element_text(size=8))+
+  labs(title = "Mapa base", 
+       subtitle  = "Fuente: Properati")
+```
+
+*Haremos un join espacial con el dataset de Barrios para quedarnos con las propiedades de la Ciudad Autónoma de Buenos Aires*
+
+```{r}
+data_properati_CABA <- mutate(st_join(data_properati_CABA, barrios))
+data_properati_CABA <- filter(data_properati_CABA, !is.na(barrio))
+```
+
+*Mapeamos nuevamente*
+
+```{r fig.width=20, fig.height=18}
+ggplot()+
+  geom_sf(data=barrios) +
+  geom_sf(data=data_properati_CABA) +
+  theme_minimal() +
+  theme(legend.title=element_text(size=8))+
+  coord_sf(datum = NA)+
+  labs(title = "Mapa base", 
+       subtitle  = "Fuente: Properati")
+```
+
+*Nos será conveniente dividir el dataset en dos. Por un lado venta, y por otro lado alquileres. Fundamentalmente esto se debe a que los Alquileres se publican en pesos y las Ventas de inmuebles en dólares.*
+
+```{r}
+data_properati_CABA_venta <- filter(data_properati_CABA, operation_type == "Venta")
+data_properati_CABA_alq <- filter(data_properati_CABA, !operation_type == "Venta")
+```
+
+```{r}
+ggplot(data = data_properati_CABA_venta) + geom_histogram(aes(x = precio))
+```
+
+```{r}
+ggplot(data = data_properati_CABA_alq) + geom_histogram(aes(x = precio))
+```
+
+*Ahora procederemos a realizar los gráficos y análisis correspondientes para responder nuestros interrogantes de investigación*
+
+*Evolución de Capital Federal*
+
+*Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+data_properati_CABA_alq %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Conclusiones del gráfico: Vemos que los valores promedio están bastante elevados para lo que son los alquileres en CABA, incluso luego de aumentar por el efecto de la ley.*
+
+```{r}
+summary(data_properati_CABA_alq$precio)
+```
+
+*Nos guardamos el corte del tercer quintil para omitir los valores extremos del análisis*
+
+```{r}
+variableprecioCABAalq <- summary(data_properati_CABA_alq$precio)
+Q3CABAalq <- variableprecioCABAalq[5]
+Q3CABAalq
+```
+
+*Elpromedio se ve fuertemente impactado por los valores extremos. Intentemos realizarlo cortando por el tercer quintil o utilizando la mediana*
+
+```{r}
+data_properati_CABA_alq %>% 
+  filter(precio<Q3CABAalq) %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+500, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Hacemos el análisis utilizando la mediana*
+
+```{r}
+data_properati_CABA_alq %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Sumamos el corte por el Q3*
+
+```{r}
+data_properati_CABA_alq %>% 
+  filter(precio<Q3CABAalq) %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+
+*Conclusiones del gráfico: Tiene mayor correlación con los precios que hemos visto y vemos en el mercado de alquileres de Capital Federal.*
+
+*Analizar el costo de alq x m2*
+
+```{r}
+data_properati_CABA_alq %>% 
+  group_by(fecha) %>%
+  summarise(preciopromxm2=round(median(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=preciopromxm2))+
+  geom_point(aes(fecha, y=preciopromxm2))+
+  geom_text(aes(fecha, y=preciopromxm2+25, label=preciopromxm2), size=3)+
+  labs(title = "Evolución de la variable precio por m2 - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Qué sucede si cortamos la muestra en Q3*
+
+```{r}
+data_properati_CABA_alq %>% 
+  filter(precio<Q3CABAalq) %>% 
+  group_by(fecha) %>%
+  summarise(preciopromxm2=round(median(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=preciopromxm2))+
+  geom_point(aes(fecha, y=preciopromxm2))+
+  geom_text(aes(fecha, y=preciopromxm2+25, label=preciopromxm2), size=3)+
+  labs(title = "Evolución de la variable precio por m2 - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Conclusiones del gráfico: El precio por m2 se mueve en la misma tendencia.*
+
+*Abrir el análisis de precio de alquiler por Barrio*
+
+```{r fig.width=20, fig.height=18}
+preciopromalq <- data_properati_CABA_alq %>%
+  filter(precio<Q3CABAalq) %>% 
+  st_set_geometry(NULL) %>%
+  group_by(barrio) %>%
+  summarise(preciopromalq=median(precio))
+preciopromalqxbarrio <- left_join(barrios, preciopromalq, by = "barrio")
+ggplot()+
+  geom_sf(data=preciopromalqxbarrio, aes(fill=preciopromalq)) +
+  geom_sf_label(data=barrios, aes(label = barrio), size=4) +
+  scale_fill_distiller(palette = "Spectral") +
+  theme_light()+
+    labs(title="Precio promedio por Barrio en CABA - 2020-2021",
+       subtitle = "Fuente: Properati")+
+    theme_void()
+```
+
+*Conclusiones del gráfico: *
+
+*Abrir dicho análisis por Barrio, fasetando por mes y año*
+
+```{r fig.width=20, fig.height=18}
+preciopromalq <- data_properati_CABA_alq %>%
+  filter(precio<Q3CABAalq) %>% 
+  st_set_geometry(NULL) %>%
+  group_by(barrio, fecha) %>%
+  summarise(preciopromalq=median(precio))
+preciopromalqxbarrio <- left_join(barrios, preciopromalq, by = "barrio")
+ggplot()+
+  geom_sf(data=preciopromalqxbarrio, aes(fill=preciopromalq)) +
+  geom_sf_label(data=barrios, aes(label = barrio), size=1) +
+  scale_fill_distiller(palette = "Spectral") +
+  theme_light()+
+    labs(title="Precio promedio por Barrio en CABA - 2020-2021",
+       subtitle = "Fuente: Properati")+
+    theme_void()+facet_wrap(~fecha)
+```
+
+*Conclusiones del gráfico: *
+
+*Evolución del Mercado Inmobiliario de Capital*
+
+*Gráfico de barras con cantidad de publicaciones mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+ggplot(data_properati_CABA)+
+  geom_bar(aes(x=fecha))
+```
+
+*Notamos un muy leve decenso en la cantidad de publicaciones, más allá del pico de abril del 2021*
+
+*Comparación alquileres vs ventas*
+
+```{r}
+ggplot(data_properati_CABA)+
+  geom_bar(aes(x=fecha, fill = operation_type))
+```
+
+*Conclusiones del gráfico: *
+
+*Evolución del Mercado de venta de inmuebles*
+
+*Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+variableprecioCABAventa <- summary(data_properati_CABA_venta$precio)
+Q3CABAventa <- variableprecioCABAventa[5]
+Q3CABAventa
+```
+
+```{r}
+data_properati_CABA_venta %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Sumamos nuestro corte en Q3*
+
+```{r}
+data_properati_CABA_venta %>% 
+  filter(precio<Q3CABAventa) %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+
+*Conclusiones del gráfico: *
+
+*Veamos qué pasa con la mediana*
+
+```{r}
+data_properati_CABA_venta %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Cortamos en Q3*
+
+```{r}
+data_properati_CABA_venta %>% 
+  filter(precio<Q3CABAventa) %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+100000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Conclusiones del gráfico: *
+
+*Analizar el costo de venta x m2*
+
+```{r}
+data_properati_CABA_venta %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+```{r}
+data_properati_CABA_venta %>% 
+  filter(precio<Q3CABAventa) %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Conclusiones del gráfico: *
+
+*Del mismo modo que lo anterior, veamos qué pasa con la mediana*
+
+```{r}
+data_properati_CABA_venta %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+5000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Conclusiones del gráfico: *
+
+*Abrir el análisis de precio de venta por Barrio*
+
+```{r fig.width=20, fig.height=18}
+preciopromvta <- data_properati_CABA_venta %>%
+  filter(precio<Q3CABAventa) %>% 
+  st_set_geometry(NULL) %>%
+  group_by(barrio, fecha) %>%
+  summarise(preciopromvta=median(precio))
+preciopromvtaxbarrio <- left_join(barrios, preciopromvta, by = "barrio")
+ggplot()+
+  geom_sf(data=preciopromvtaxbarrio, aes(fill=preciopromvta)) +
+  geom_sf_label(data=barrios, aes(label = barrio), size=4) +
+  scale_fill_distiller(palette = "Spectral") +
+  theme_light()+
+    labs(title="Precio promedio por Barrio en CABA - 2020-2021",
+       subtitle = "Fuente: Properati")+
+    theme_void()
+```
+
+*Conclusiones del gráfico: *
+
+*Abrir dicho análisis por Barrio, fasetando por mes y año*
+
+```{r fig.width=20, fig.height=18}
+preciopromvta <- data_properati_CABA_venta %>%
+  filter(precio<Q3CABAventa) %>% 
+  st_set_geometry(NULL) %>%
+  group_by(barrio, fecha) %>%
+  summarise(preciopromvta=median(precio))
+preciopromvtaxbarrio <- left_join(barrios, preciopromvta, by = "barrio")
+ggplot()+
+  geom_sf(data=preciopromvtaxbarrio, aes(fill=preciopromvta)) +
+  geom_sf_label(data=barrios, aes(label = barrio), size=1) +
+  scale_fill_distiller(palette = "Spectral") +
+  theme_light()+
+    labs(title="Precio promedio por Barrio en CABA - 2020-2021",
+       subtitle = "Fuente: Properati")+
+    theme_void()+facet_wrap(~fecha)
+```
+
+*Analizar el costo de alq x m2*
+
+```{r}
+data_properati_CABA_alq %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(mean(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+50, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Conclusiones del gráfico: *
+
+*Del mismo modo que lo anterior, veamos qué pasa con la mediana*
+
+```{r}
+data_properati_CABA_alq %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precioxm2))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+50, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Conclusiones del gráfico: *
+
+*Evolución de las demás Provincias*
+
+*Gráfico de barras con cantidad de publicaciones por Provincia*
+
+```{r}
+ggplot(data_properati_non_CABA)+
+  geom_bar(aes(x= l2, fill = l2))+
+  coord_flip()
+```
+
+*Conclusiones del gráfico: *
+
+Como se puede observar, las provincias con mayor cantidad de publicaciones son PBA (con primacía de la Zona Norte del GBA), Santa Fe (que supera las 20.000 publicaciones) y Córdoba (con aproximadamente 15.000 publicaciones). 
+
+*Unificación de GBA*
+
+```{r}
+data_properati_non_CABA$l2 <- as.character(data_properati_non_CABA$l2)
+data_properati_non_CABA$l2[data_properati_non_CABA$l2 == "Buenos Aires Interior"] <- "Provincia de Buenos Aires"
+data_properati_non_CABA$l2[data_properati_non_CABA$l2 == "Buenos Aires Costa Atlántica"] <- "Provincia de Buenos Aires"
+data_properati_non_CABA$l2[data_properati_non_CABA$l2 == "Bs.As. G.B.A. Zona Sur"] <- "Provincia de Buenos Aires"
+data_properati_non_CABA$l2[data_properati_non_CABA$l2 == "Bs.As. G.B.A. Zona Oeste"] <- "Provincia de Buenos Aires"
+data_properati_non_CABA$l2[data_properati_non_CABA$l2 == "Bs.As. G.B.A. Zona Norte"] <- "Provincia de Buenos Aires"
+data_properati_non_CABA$l2 <- as.factor(data_properati_non_CABA$l2)
+summary(data_properati_non_CABA)
+```
+
+*Seleccionar las 3 provincias con mayor volumen de publicaciones*
+
+```{r}
+ggplot(data_properati_non_CABA)+
+  geom_bar(aes(x= l2, fill = l2))+
+  coord_flip()
+```
+
+*Conclusiones del gráfico: *
+
+En este gráfico observamos que, si bien son 3 las provincias que se destacan por la cantidad de publicaciones, la Provincia de Buenos Aires (en este gráfico visualizada en su conjunto) supera ampliamente a las demás, alcanzanado un total de más de 100.000 publicaciones. 
+
+*Provincia 1 - GBA*
+
+*Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+data_properati_non_CABA %>% 
+  filter(l2 == "Provincia de Buenos Aires") %>% 
+  filter(operation_type == "Alquiler") %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+10000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio de alquiler - Provincia de Buenos Aires 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Conclusiones del gráfico: *
+
+En relación a la evolución de la variable precio de alquiler en la Provincia de Buenos Aires 2020-2021, podemos observar que el pico máximo se alcanza en el segundo semestre del año 2020. Hacia principios de 2021 empieza a descender aunque no recupera los valores bajos del primer semestre del año 2020 y mantiene una estabilidad en los meses siguientes.
+
+*Comparación alquileres vs ventas*
+
+```{r}
+ggplot(data_properati_non_CABA %>% filter(l2 == "Provincia de Buenos Aires"))+
+  geom_bar(aes(x=fecha, fill = operation_type))
+```
+
+*Conclusiones del gráfico: *
+
+En todos los meses analizados se observa una mayor cantidad de propiedades a la venta que en alquiler. 
+
+*Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+data_properati_non_CABA %>% 
+  filter(l2 == "Provincia de Buenos Aires") %>% 
+  filter(operation_type == "Venta") %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio de venta - Provincia de Buenos Aires 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Conclusiones del gráfico: *
+
+El gráfico nos muestra que luego de subas y bajas reiteradas de los precios de venta en la Provincia de Buenos Aires, desde enero de 2021 comienza cierta estabilidad de los valores.
+
+*Provincia 1 - Córdoba*
+
+*Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+data_properati_non_CABA %>% 
+  filter(l2 == "Córdoba") %>% 
+  filter(operation_type == "Alquiler") %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio de alquiler - Provincia de Córdoba - 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Conclusiones del gráfico: *
+
+El valor más elevado se encuentra promediando el año 2021.
+
+*Comparación alquileres vs ventas*
+
+```{r}
+ggplot(data_properati_non_CABA %>% filter(l2 == "Córdoba"))+
+  geom_bar(aes(x=fecha, fill = operation_type))
+```
+
+*Conclusiones del gráfico: *
+
+Se obsereva una mayor cantidad de propiedades en venta que en alquiler en todos los meses de estudio.
+
+*Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+data_properati_non_CABA %>% 
+  filter(l2 == "Córdoba") %>% 
+  filter(operation_type == "Venta") %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio de venta - Provincia de Córdoba 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Conclusiones del gráfico: *
+
+En el año 2020 se pueden observar subas y bajas reiteradas en los precios de venta. En el año 2021 los valores del precio de venta en la Provincia de Córdoba empiezan a subir hacia principio de año para descender en el mes de abril y luego volver a aumentar hacia mitad del año 2021.
+
+
+
+*Provincia 1 - Santa Fe*
+
+*Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+data_properati_non_CABA %>% 
+  filter(l2 == "Santa Fe") %>% 
+  filter(operation_type == "Alquiler") %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio de alquiler - Provincia de Santa Fe - 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Conclusiones del gráfico: *
+
+*Comparación alquileres vs ventas*
+
+Luego del primer semestre del año 2020, el precio de los alquieres comienza a aumentar hasta lograr una estabilidad hacia los últimos meses del mismo año. Posteriormente vuelve a ascender en los cinco primeros meses del año 2021 y después experimenta una baja.
+
+```{r}
+ggplot(data_properati_non_CABA %>% filter(l2 == "Santa Fe"))+
+  geom_bar(aes(x=fecha, fill = operation_type))
+```
+
+*Conclusiones del gráfico: *
+
+Se observa, como en las provincias analizadas anteriormente, que hay una mayor cantidad de publicaciones de propiedades a la venta por sobre las de alquiler.
+
+*Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
+
+```{r}
+data_properati_non_CABA %>% 
+  filter(l2 == "Santa Fe") %>% 
+  filter(operation_type == "Venta") %>% 
+  group_by(fecha) %>%
+  summarise(precioprom=round(median(precio))) %>% 
+  ggplot() +
+  geom_line(aes(fecha, y=precioprom))+
+  geom_point(aes(fecha, y=precioprom))+
+  geom_text(aes(fecha, y=precioprom+1000, label=precioprom), size=3)+
+  labs(title = "Evolución de la variable precio de venta - Provincia de Santa Fe 2020 - 2021", 
+       subtitle  = "Fuentes: PROPERATI")
+```
+
+*Conclusiones del gráfico: *
+
+En relación a los precios de venta, se observa un pico hacia finales del 2020 con una gran baja de los mismos en enero de 2021 para luego volver a subir y descender hacia abril que finalmente hay un aumento considerable de los mismos para luego lograr cierta estabilidad.
+
+*Conclusiones Finales del Análisis: Como impactó la Nueva Ley de Alquileres en el Mercado Inmobiliario*
+
