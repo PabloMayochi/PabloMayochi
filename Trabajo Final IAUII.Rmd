@@ -616,6 +616,8 @@ ggplot(data_properati_non_CABA)+
 
 *Conclusiones del gráfico: *
 
+Como se puede observar, las provincias con mayor cantidad de publicaciones son PBA (con primacía de la Zona Norte del GBA), Santa Fe (que supera las 20.000 publicaciones) y Córdoba (con aproximadamente 15.000 publicaciones). 
+
 *Unificación de GBA*
 
 ```{r}
@@ -639,6 +641,8 @@ ggplot(data_properati_non_CABA)+
 
 *Conclusiones del gráfico: *
 
+En este gráfico observamos que, si bien son 3 las provincias que se destacan por la cantidad de publicaciones, la Provincia de Buenos Aires (en este gráfico visualizada en su conjunto) supera ampliamente a las demás, alcanzanado un total de más de 100.000 publicaciones. 
+
 *Provincia 1 - GBA*
 
 *Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
@@ -659,6 +663,8 @@ data_properati_non_CABA %>%
 
 *Conclusiones del gráfico: *
 
+En relación a la evolución de la variable precio de alquiler en la Provincia de Buenos Aires 2020-2021, podemos observar que el pico máximo se alcanza en el segundo semestre del año 2020. Hacia principios de 2021 empieza a descender aunque no recupera los valores bajos del primer semestre del año 2020 y mantiene una estabilidad en los meses siguientes.
+
 *Comparación alquileres vs ventas*
 
 ```{r}
@@ -667,6 +673,8 @@ ggplot(data_properati_non_CABA %>% filter(l2 == "Provincia de Buenos Aires"))+
 ```
 
 *Conclusiones del gráfico: *
+
+En todos los meses analizados se observa una mayor cantidad de propiedades a la venta que en alquiler. 
 
 *Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
 
@@ -685,6 +693,8 @@ data_properati_non_CABA %>%
 ```
 
 *Conclusiones del gráfico: *
+
+El gráfico nos muestra que luego de subas y bajas reiteradas de los precios de venta en la Provincia de Buenos Aires, desde enero de 2021 comienza cierta estabilidad de los valores.
 
 *Provincia 1 - Córdoba*
 
@@ -706,6 +716,8 @@ data_properati_non_CABA %>%
 
 *Conclusiones del gráfico: *
 
+El valor más elevado se encuentra promediando el año 2021.
+
 *Comparación alquileres vs ventas*
 
 ```{r}
@@ -714,6 +726,8 @@ ggplot(data_properati_non_CABA %>% filter(l2 == "Córdoba"))+
 ```
 
 *Conclusiones del gráfico: *
+
+Se obsereva una mayor cantidad de propiedades en venta que en alquiler en todos los meses de estudio.
 
 *Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
 
@@ -732,6 +746,10 @@ data_properati_non_CABA %>%
 ```
 
 *Conclusiones del gráfico: *
+
+En el año 2020 se pueden observar subas y bajas reiteradas en los precios de venta. En el año 2021 los valores del precio de venta en la Provincia de Córdoba empiezan a subir hacia principio de año para descender en el mes de abril y luego volver a aumentar hacia mitad del año 2021.
+
+
 
 *Provincia 1 - Santa Fe*
 
@@ -755,12 +773,16 @@ data_properati_non_CABA %>%
 
 *Comparación alquileres vs ventas*
 
+Luego del primer semestre del año 2020, el precio de los alquieres comienza a aumentar hasta lograr una estabilidad hacia los últimos meses del mismo año. Posteriormente vuelve a ascender en los cinco primeros meses del año 2021 y después experimenta una baja.
+
 ```{r}
 ggplot(data_properati_non_CABA %>% filter(l2 == "Santa Fe"))+
   geom_bar(aes(x=fecha, fill = operation_type))
 ```
 
 *Conclusiones del gráfico: *
+
+Se observa, como en las provincias analizadas anteriormente, que hay una mayor cantidad de publicaciones de propiedades a la venta por sobre las de alquiler.
 
 *Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
 
@@ -779,6 +801,8 @@ data_properati_non_CABA %>%
 ```
 
 *Conclusiones del gráfico: *
+
+En relación a los precios de venta, se observa un pico hacia finales del 2020 con una gran baja de los mismos en enero de 2021 para luego volver a subir y descender hacia abril que finalmente hay un aumento considerable de los mismos.
 
 *Conclusiones Finales del Análisis: Como impactó la Nueva Ley de Alquileres en el Mercado Inmobiliario*
 
