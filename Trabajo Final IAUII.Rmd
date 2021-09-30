@@ -647,7 +647,7 @@ ggplot(data_properati_non_CABA)+
 
 *Conclusiones del gráfico: *
 
-En este gráfico observamos que, si bien son 3 las provincias que se destacan por la cantidad de publicaciones, la Provincia de Buenos Aires (en este gráfico visualizada en su conjunto) supera ampliamente a las demás, alcanzanado un total de más de 100.000 publicaciones. 
+En este gráfico observamos que, si bien son 3 las provincias que se destacan por la cantidad de publicaciones, la Provincia de Buenos Aires (en este gráfico visualizada en su conjunto) supera ampliamente a las demás, alcanzando un total de más de 100.000 publicaciones. 
 
 *Provincia 1 - GBA*
 
@@ -733,7 +733,7 @@ ggplot(data_properati_non_CABA %>% filter(l2 == "Córdoba"))+
 
 *Conclusiones del gráfico: *
 
-Se obsereva una mayor cantidad de propiedades en venta que en alquiler en todos los meses de estudio.
+Se observa una mayor cantidad de propiedades en venta que en alquiler en todos los meses de estudio.
 
 *Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
 
@@ -779,7 +779,7 @@ data_properati_non_CABA %>%
 
 *Comparación alquileres vs ventas*
 
-Luego del primer semestre del año 2020, el precio de los alquieres comienza a aumentar hasta lograr una estabilidad hacia los últimos meses del mismo año. Posteriormente vuelve a ascender en los cinco primeros meses del año 2021 y después experimenta una baja.
+Luego del primer semestre del año 2020, el precio de los alquileres comienza a aumentar hasta lograr una estabilidad hacia los últimos meses del mismo año. Posteriormente vuelve a ascender en los cinco primeros meses del año 2021 y después experimenta una baja.
 
 ```{r}
 ggplot(data_properati_non_CABA %>% filter(l2 == "Santa Fe"))+
