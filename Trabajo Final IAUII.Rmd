@@ -802,7 +802,7 @@ data_properati_non_CABA %>%
 
 *Conclusiones del gráfico: *
 
-En relación a los precios de venta, se observa un pico hacia finales del 2020 con una gran baja de los mismos en enero de 2021 para luego volver a subir y descender hacia abril que finalmente hay un aumento considerable de los mismos.
+En relación a los precios de venta, se observa un pico hacia finales del 2020 con una gran baja de los mismos en enero de 2021 para luego volver a subir y descender hacia abril que finalmente hay un aumento considerable de los mismos para luego lograr cierta estabilidad.
 
 *Conclusiones Finales del Análisis: Como impactó la Nueva Ley de Alquileres en el Mercado Inmobiliario*
 
