@@ -411,7 +411,7 @@ ggplot(data_properati_CABA)+
   geom_bar(aes(x=fecha))
 ```
 
-*Notamos un muy leve decenso en la cantidad de publicaciones, más allá del pico de abril del 2021*
+*En el gráfico anterior, podemos observar las variaciones en las publicaciones tanto de ventas como de alquileres, durante los dos últimos semestres posteriores a la entrada en vigencia de la norma. Se puede vislumbrar una leve pero sostenida caida en la cantidad total ofertada, con la única excepción del mes de Abril de 2021 donde se destaca un fuerte aumento, que no se sostuvo posteriormente*
 
 *Comparación alquileres vs ventas*
 
@@ -420,7 +420,7 @@ ggplot(data_properati_CABA)+
   geom_bar(aes(x=fecha, fill = operation_type))
 ```
 
-*Conclusiones del gráfico: *
+*Conclusiones del gráfico: A partir de la entrada en vigencia de la norma, se vislumbra cierta disminución del share que representan los alquileres sobre el total de las unidades ofertadas. Esta caida se vuelve algo mas evidente en los últimos meses analizados. Sin embargo, en los meses muestreados no puede concluirse de forma terminante que la cantidad de alquileres haya diminuido sobre el total, mas bien parece acompañar la tendencia general*
 
 *Evolución del Mercado de venta de inmuebles*
 
@@ -460,7 +460,7 @@ data_properati_CABA_venta %>%
 ```
 
 
-*Conclusiones del gráfico: *
+*Conclusiones del gráfico: Se evidencia un aumento considerable en el precio promedio de las propiedades muestreadas desde el inicio de la serie, sin embargo hay que tomar en consideración circunstancias como la pandemia que impactaron fuertemente en los valores de los inmuebles, especialmente sobre la propiedad horizontal. Se observa una suba sostenida con pico en Abril de 2021 y luego una baja pronunciada, que podría bien responder a una estabilización tras un overshooting.*
 
 *Veamos qué pasa con la mediana*
 
@@ -491,7 +491,7 @@ data_properati_CABA_venta %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Conclusiones del gráfico: *
+*Conclusiones del gráfico: La mediana sigue una tendencia similar a la del promedio, evidenciando una fuerte suba seguida de una caida en los meses finales de la serie analizada.*
 
 *Analizar el costo de venta x m2*
 
@@ -520,7 +520,7 @@ data_properati_CABA_venta %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Conclusiones del gráfico: *
+*Conclusiones del gráfico: Al observar el precio promedio por m2, se puede identificar, de manera similar a los casos anteriores, una suba sostenida hacia finales de 2020 y principios de 2021, con un pico a principios de año (esta vez en Enero) y una fuerte caida posterior para luego estabilizarse. Esta serie parece indicar que los precios promedio por unidad vendida se vieron empujados hacia arriba por la fuerte suba de la oferta en Abril de 2021, aunque los valores promedio resultaron en caida, lo que permitiría vislumbrar una, también, fuerte suba de la cantidad de m2 ofertados. Esta serie parece indicar que el overshooting en los precios se habría dado en Enero, con su posterior estabilización.*
 
 *Del mismo modo que lo anterior, veamos qué pasa con la mediana*
 
@@ -536,7 +536,7 @@ data_properati_CABA_venta %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Conclusiones del gráfico: *
+*Conclusiones del gráfico: La mediana por su parte, sigue una tendencia similar, aunque no se vislumbra un overshooting tan amplio como en el promedio*
 
 *Abrir el análisis de precio de venta por Barrio*
 
