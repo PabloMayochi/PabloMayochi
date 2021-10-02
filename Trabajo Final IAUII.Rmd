@@ -1,11 +1,11 @@
 ---
-title: "Como impactó la Nueva Ley de Alquileres en el Mercado Inmobiliario"
+title: "Como impactó la Nueva Ley de Alquileres en el Mercado Inmobiliario de Capital Federal"
 author: "Bardoneschi Gonzalo - Bernassar Felicitas - Cornudet Victoria - Mayochi Pablo"
 date: "26/6/2021"
 output: html_document
 ---
 
-*En el presente trabajo nos proponemos analizar como impactó el aumento de los precios en el mercado de alquileres a partir de la nueva ley de alquileres (Ley 27.551 del Código Civil y Comercial de la Nación) promulgada el 30 de junio de 2020.*
+*En el presente trabajo nos proponemos analizar como impactó el aumento de los precios en el mercado de alquileres a partir de la nueva ley de alquileres (Ley 27.551 del Código Civil y Comercial de la Nación) promulgada el 30 de junio de 2020. El análisis se enfocará principalmente en la Ciudad Autónoma de Buenos Aires, y complementariamente analizaremos datos de otras provincias para comparar.*
 
 *Importamos el dataset de Properati para analizar la evolución de los precios*
 
@@ -71,7 +71,7 @@ unif_data_properati <- left_join(clean_data_properati, dolar_bcra, by=c("created
 summary(unif_data_properati)
 ```
 
-*Como a partir del 2020 ya en Argentina existía el recargo del 30% y del 35% a la compra de dólares, empujando la brecha cambiaria del dolar "blue", y considerando que los precios de las propiedades por el efecto especulativo se calcularon históricamente en base al dolar "blue", debiéramos tener en cuenta ese recargo del 65% para el tipo de cambio*
+*Como a partir del 2020 ya en Argentina existía el recargo del 30% y del 35% a la compra de dólares, empujando la brecha cambiaria del dolar "blue", y considerando que los precios de las propiedades por el efecto especulativo se calcularon históricamente en base al dolar "blue", debiéramos tener en cuenta ese recargo del 65% para el tipo de cambio.*
 
 ```{r}
 unif_data_properati <- unif_data_properati %>%
@@ -117,17 +117,21 @@ arg_data_properati$surface_covered[is.na(arg_data_properati$surface_covered)] <-
 summary(arg_data_properati$surface_covered)
 ```
 
+*Algunas propiedades tienen metraje en 0 o negativo, lo cual no nos sirve para nuestro análisis.*
+
 ```{r}
 arg_data_properati <- arg_data_properati %>% filter(surface_covered>0)
 summary(arg_data_properati$surface_covered)
 ```
+
+*Ahora si, generamos nuestra variable de precio por metro cuadrado*
 
 ```{r}
 arg_data_properati <- arg_data_properati %>% mutate(precioxm2 = precio/surface_covered)
 summary(arg_data_properati$precioxm2)
 ```
 
-*Analizamos la evolución de la variable*
+*Analizamos la evolución de la variable fecha*
 
 ```{r}
 class(arg_data_properati$created_on)
@@ -229,7 +233,7 @@ ggplot()+
        subtitle  = "Fuente: Properati")
 ```
 
-*Nos será conveniente dividir el dataset en dos. Por un lado venta, y por otro lado alquileres. Fundamentalmente esto se debe a que los Alquileres se publican en pesos y las Ventas de inmuebles en dólares.*
+*Nos será conveniente dividir el dataset en dos. Por un lado venta, y por otro lado alquileres.*
 
 ```{r}
 data_properati_CABA_venta <- filter(data_properati_CABA, operation_type == "Venta")
@@ -244,11 +248,11 @@ ggplot(data = data_properati_CABA_venta) + geom_histogram(aes(x = precio))
 ggplot(data = data_properati_CABA_alq) + geom_histogram(aes(x = precio))
 ```
 
-*Ahora procederemos a realizar los gráficos y análisis correspondientes para responder nuestros interrogantes de investigación*
+*Ahora procederemos a realizar los gráficos y análisis correspondientes para responder nuestros interrogantes de investigación. Procedemos con nuestro análisis de como impactó la ley en los mercados inmobiliarios, enfocándonos primero en Capital Federal. Iremos enumerando y titulando cada gráfico, así como tambien realizando comentarios de cada uno para luego hacer nuestras conclusiones finales del trabajo.*
 
 *Evolución de Capital Federal*
 
-*Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
+*Gráfico de líneas con el precio promedio de alquiler mes a mes (2020 - 2021)*
 
 ```{r}
 data_properati_CABA_alq %>% 
@@ -262,13 +266,13 @@ data_properati_CABA_alq %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Conclusiones del gráfico: Vemos que los valores promedio están bastante elevados para lo que son los alquileres en CABA, incluso luego de aumentar por el efecto de la ley.*
+*Conclusiones del gráfico: Vemos que los valores promedio están bastante elevados para lo que son los alquileres en CABA, incluso luego de aumentar por el efecto de la ley. Esto se debe a que analizando por el PROMEDIO nos vemos fuertemente afectado por valores extremos.*
 
 ```{r}
 summary(data_properati_CABA_alq$precio)
 ```
 
-*Nos guardamos el corte del tercer quintil para omitir los valores extremos del análisis*
+*Nos guardamos el corte del tercer quintil para omitir los valores extremos del análisis.*
 
 ```{r}
 variableprecioCABAalq <- summary(data_properati_CABA_alq$precio)
@@ -276,7 +280,7 @@ Q3CABAalq <- variableprecioCABAalq[5]
 Q3CABAalq
 ```
 
-*Elpromedio se ve fuertemente impactado por los valores extremos. Intentemos realizarlo cortando por el tercer quintil o utilizando la mediana*
+*Intentemos realizarlo cortando por el tercer quintil o utilizando la mediana*
 
 ```{r}
 data_properati_CABA_alq %>% 
@@ -291,7 +295,7 @@ data_properati_CABA_alq %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Conclusiones del gráfico: Vemos que la tendencia ascendente del precio promedio es menos abrupta en entre Jul 2020 y oct 2020, a partir de alli la tendencia es mas pronunciada.*
+*Conclusiones del gráfico: en base al promedio, vemos que la tendencia ascendente del precio promedio es menos abrupta en entre Jul 2020 y oct 2020. A partir de diciembre 2020/enero 2021 la tendencia a la suba es mas pronunciada.*
 
 *Hacemos el análisis utilizando la mediana*
 
@@ -307,9 +311,9 @@ data_properati_CABA_alq %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Conclusiones del gráfico: el salto ascendente en el precio promedio se da justo antes de Oct del 2 .*
+*Conclusiones del gráfico: utilizando la mediana, el salto ascendente en el precio se da en Octubre de 2020.*
 
-*Sumamos el corte por el Q3*
+*Sumamos el corte por el Q3 a nuestro análisis de la mediana.*
 
 ```{r}
 data_properati_CABA_alq %>% 
@@ -323,7 +327,6 @@ data_properati_CABA_alq %>%
   labs(title = "Evolución de la variable precio - Capital Federal 2020 - 2021", 
        subtitle  = "Fuentes: PROPERATI")
 ```
-
 
 *Conclusiones del gráfico: Tiene mayor correlación con los precios que hemos visto y vemos en el mercado de alquileres de Capital Federal.*
 
@@ -341,7 +344,7 @@ data_properati_CABA_alq %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Conclusiones del gráfico: Vemos una tendencia ascendente a partir de agosto 2020, se mueve en la misma tendencia.*
+*Conclusiones del gráfico: Vemos una tendencia ascendente a partir de agosto 2020. Más allá del valor inferior en Abril de 2021, podríamos decir que el gráfico evoluciona en la misma tendencia ascendente. Entre Mayo 2020 y Junio 2021 el precio por m2 subió un 50%, pasando de 600 a 900.*
 
 *Qué sucede si cortamos la muestra en Q3*
 
@@ -358,7 +361,7 @@ data_properati_CABA_alq %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Conclusiones del gráfico: El precio por m2 se mueve en la misma tendencia.*
+*Conclusiones del gráfico: similar al anterior, precio por m2 se mueve en la misma tendencia.*
 
 *Abrir el análisis de precio de alquiler por Barrio*
 
@@ -379,7 +382,7 @@ ggplot()+
     theme_void()
 ```
 
-*Conclusiones del gráfico: el corredor norte hasta puerto madero como lider se caracterizan por tener el mayor precio promedio de alquiler, como lo fue historicamente*
+*Conclusiones del gráfico: el corredor norte hasta puerto madero como lider se caracterizan por tener el mayor precio promedio de alquiler, como lo fue historicamente. Encontramos un valor llamativo en Villa Soldati, rondando los 40.000 que requeriría un análisis más detallado.*
 
 *Abrir dicho análisis por Barrio, fasetando por mes y año*
 
@@ -400,7 +403,7 @@ ggplot()+
     theme_void()+facet_wrap(~fecha)
 ```
 
-*Conclusiones del gráfico: Puerto madero fue perdiendo valor y zona oeste y sur de los barrios de la capital se fueron encareciendo, equiparandose con el corredor norte. La diferencia no es tan marcada como antes. *
+*Conclusiones del gráfico: Puerto madero fue perdiendo valor y zona oeste y sur de los barrios de la capital se fueron encareciendo, equiparandose con el corredor norte. La diferencia no es tan marcada como antes.*
 
 *Evolución del Mercado Inmobiliario de Capital*
 
@@ -411,7 +414,7 @@ ggplot(data_properati_CABA)+
   geom_bar(aes(x=fecha))
 ```
 
-*En el gráfico anterior, podemos observar las variaciones en las publicaciones tanto de ventas como de alquileres, durante los dos últimos semestres posteriores a la entrada en vigencia de la norma. Se puede vislumbrar una leve pero sostenida caida en la cantidad total ofertada, con la única excepción del mes de Abril de 2021 donde se destaca un fuerte aumento, que no se sostuvo posteriormente*
+*Conclusiones del gráfico: En el gráfico anterior, podemos observar las variaciones en las publicaciones tanto de ventas como de alquileres. Durante los dos últimos semestres posteriores a la entrada en vigencia de la norma, se puede vislumbrar una leve pero sostenida caida en la cantidad total ofertada, con la única excepción del mes de Abril de 2021 donde se destaca un fuerte aumento, que no se sostuvo posteriormente.*
 
 *Comparación alquileres vs ventas*
 
@@ -420,7 +423,7 @@ ggplot(data_properati_CABA)+
   geom_bar(aes(x=fecha, fill = operation_type))
 ```
 
-*Conclusiones del gráfico: A partir de la entrada en vigencia de la norma, se vislumbra cierta disminución del share que representan los alquileres sobre el total de las unidades ofertadas. Esta caida se vuelve algo mas evidente en los últimos meses analizados. Sin embargo, en los meses muestreados no puede concluirse de forma terminante que la cantidad de alquileres haya diminuido sobre el total, mas bien parece acompañar la tendencia general*
+*Conclusiones del gráfico: A partir de la entrada en vigencia de la norma, se vislumbra cierta disminución del share que representan los alquileres sobre el total de las unidades ofertadas. Esta caida se vuelve algo más evidente en los últimos meses analizados. Sin embargo, en los meses muestreados no puede concluirse de forma terminante que la cantidad de alquileres haya diminuido sobre el total, más bien parece acompañar la tendencia general*
 
 *Evolución del Mercado de venta de inmuebles*
 
@@ -444,6 +447,8 @@ data_properati_CABA_venta %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
+*Conclusiones del gráfico: la evolución es bastante errática. Vemos una caída entre Mayo 2020 y Septiembre 2020, seguido de un gran pico en Noviembre 2020, paraa luego volver a un valor medio y continuar con tendencia ascendente. Deberemos adentrarnos más en el análisis.*
+
 *Sumamos nuestro corte en Q3*
 
 ```{r}
@@ -459,8 +464,7 @@ data_properati_CABA_venta %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-
-*Conclusiones del gráfico: Se evidencia un aumento considerable en el precio promedio de las propiedades muestreadas desde el inicio de la serie, sin embargo hay que tomar en consideración circunstancias como la pandemia que impactaron fuertemente en los valores de los inmuebles, especialmente sobre la propiedad horizontal. Se observa una suba sostenida con pico en Abril de 2021 y luego una baja pronunciada, que podría bien responder a una estabilización tras un overshooting.*
+*Conclusiones del gráfico: Con menos saltos abruptos, se evidencia un aumento considerable en el precio promedio de las propiedades muestreadas desde el inicio de la serie, sin embargo hay que tomar en consideración circunstancias como la pandemia que impactaron fuertemente en los valores de los inmuebles, especialmente sobre la propiedad horizontal. Se observa una suba sostenida con pico en Abril de 2021 y luego una baja pronunciada, que podría bien responder a una estabilización tras un overshooting.*
 
 *Veamos qué pasa con la mediana*
 
@@ -476,7 +480,7 @@ data_properati_CABA_venta %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Cortamos en Q3*
+*Similar al análisis inicial, vemos muchos saltos a valores extremos. Cortamos en Q3 para analizar más en detalle.*
 
 ```{r}
 data_properati_CABA_venta %>% 
@@ -557,9 +561,9 @@ ggplot()+
     theme_void()
 ```
 
-*Conclusiones del gráfico: *
+*Conclusiones del gráfico: El corredor norte se mantiene como la zona más cara para compra-venta de inmuebles, encontrando su barrio más caro en Puerto Madero. Su valor extremo impide ver mayor detalle entre los barrios restantes.*
 
-*Abrir dicho análisis por Barrio, fasetando por mes y año*
+*Abrir dicho análisis por Barrio, fasetando por mes y año.*
 
 ```{r fig.width=20, fig.height=18}
 preciopromvta <- data_properati_CABA_venta %>%
@@ -578,37 +582,8 @@ ggplot()+
     theme_void()+facet_wrap(~fecha)
 ```
 
-*Analizar el costo de alq x m2*
+*Conclusiones del gráfico: Abierto por mes y año, confirmamos que el corredor norte a lo largo de todo el período 2020 - 2021 se mantuvo como la zona con precio más elevado para la compra de un inmueble. Llaman la atención algunos valores elevados en Villa Soldati por ejemplo en Mayo de 2020.*
 
-```{r}
-data_properati_CABA_alq %>% 
-  group_by(fecha) %>%
-  summarise(precioprom=round(mean(precioxm2))) %>% 
-  ggplot() +
-  geom_line(aes(fecha, y=precioprom))+
-  geom_point(aes(fecha, y=precioprom))+
-  geom_text(aes(fecha, y=precioprom+50, label=precioprom), size=3)+
-  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
-       subtitle  = "Fuentes: PROPERATI")
-```
-
-*Conclusiones del gráfico: *
-
-*Del mismo modo que lo anterior, veamos qué pasa con la mediana*
-
-```{r}
-data_properati_CABA_alq %>% 
-  group_by(fecha) %>%
-  summarise(precioprom=round(median(precioxm2))) %>% 
-  ggplot() +
-  geom_line(aes(fecha, y=precioprom))+
-  geom_point(aes(fecha, y=precioprom))+
-  geom_text(aes(fecha, y=precioprom+50, label=precioprom), size=3)+
-  labs(title = "Evolución de la variable precio en ventas - Capital Federal 2020 - 2021", 
-       subtitle  = "Fuentes: PROPERATI")
-```
-
-*Conclusiones del gráfico: *
 
 *Evolución de las demás Provincias*
 
@@ -647,7 +622,7 @@ ggplot(data_properati_non_CABA)+
 
 *Provincia 1 - GBA*
 
-*Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
+*Gráfico de líneas con el precio promedio de alquiler mes a mes (2020 - 2021)*
 
 ```{r}
 data_properati_non_CABA %>% 
@@ -663,7 +638,7 @@ data_properati_non_CABA %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Conclusiones del gráfico: En relación a la evolución de la variable precio de alquiler en la Provincia de Buenos Aires 2020-2021, podemos observar que el pico máximo se alcanza en el segundo semestre del año 2020. Hacia principios de 2021 empieza a descender aunque no recupera los valores bajos del primer semestre del año 2020 y mantiene una estabilidad en los meses siguientes.*
+*Conclusiones del gráfico: En relación a la evolución de la variable precio de alquiler en la Provincia de Buenos Aires 2020-2021, podemos observar que el pico máximo se alcanza en el segundo semestre del año 2020. Hacia principios de 2021 empieza a descender aunque no recupera los valores bajos del primer semestre del año 2020 y mantiene una estabilidad en los meses siguientes. Entendemos que el pico de Octubre - Diciembre 2020 se debe a valores extremos. Omitiendo ese salto en el análisis vemos que el alquiler en PBA pasó de 16000 en Mayo 2020 a 40000 en Junio 2021. Hablamos de una duplicación del valor de alquiler.*
 
 *Comparación alquileres vs ventas*
 
@@ -672,9 +647,9 @@ ggplot(data_properati_non_CABA %>% filter(l2 == "Provincia de Buenos Aires"))+
   geom_bar(aes(x=fecha, fill = operation_type))
 ```
 
-*Conclusiones del gráfico: En todos los meses analizados se observa una mayor cantidad de propiedades a la venta que en alquiler.*
+*Conclusiones del gráfico: En todos los meses analizados se observa una mayor cantidad de propiedades a la venta que en alquiler. Podemos ver que los alquileres disminuyen levemente a partir de enero 2021 en realción a las ventas. Si bien es cierto que la cantidad de publicaciones en general de ambos tipos disminuyó, la de alquiler (rosa) disminuyó más que la de alquileres (celeste).*
 
-*Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
+*Gráfico de líneas con el precio promedio de venta mes a mes (2020 - 2021)*
 
 ```{r}
 data_properati_non_CABA %>% 
@@ -690,11 +665,11 @@ data_properati_non_CABA %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Conclusiones del gráfico: El gráfico nos muestra que luego de subas y bajas reiteradas de los precios de venta en la Provincia de Buenos Aires, desde enero de 2021 comienza cierta estabilidad de los valores.*
+*Conclusiones del gráfico: El gráfico nos muestra que luego de subas y bajas reiteradas de los precios de venta en la Provincia de Buenos Aires, desde enero de 2021 comienza cierta estabilidad de los valores. Más allá de los altibajos, la tendencia es cláramente alcista.*
 
 *Provincia 1 - Córdoba*
 
-*Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
+*Gráfico de líneas con el precio promedio de alquiler mes a mes (2020 - 2021)*
 
 ```{r}
 data_properati_non_CABA %>% 
@@ -710,7 +685,7 @@ data_properati_non_CABA %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Conclusiones del gráfico: El valor más elevado se encuentra promediando el año 2021.*
+*Conclusiones del gráfico: Córdoba presenta una tendencia alcista en el precio de alquiler, pasando de 15.000 a 25.000 desde el comienzo al final de la serie, casi una duplicación del valor.*
 
 *Comparación alquileres vs ventas*
 
@@ -719,9 +694,9 @@ ggplot(data_properati_non_CABA %>% filter(l2 == "Córdoba"))+
   geom_bar(aes(x=fecha, fill = operation_type))
 ```
 
-*Conclusiones del gráfico: Se observa una mayor cantidad de propiedades en venta que en alquiler en todos los meses de estudio.*
+*Conclusiones del gráfico: Se observa una mayor cantidad de propiedades en venta que en alquiler en todos los meses de estudio. Similar al caso de PBA, encontramos que los alquileres han bajado su cantidad de publicaciones proporcionalmente.*
 
-*Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
+*Gráfico de líneas con el precio promedio de venta mes a mes (2020 - 2021)*
 
 ```{r}
 data_properati_non_CABA %>% 
@@ -739,10 +714,9 @@ data_properati_non_CABA %>%
 
 *Conclusiones del gráfico: En el año 2020 se pueden observar subas y bajas reiteradas en los precios de venta. En el año 2021 los valores del precio de venta en la Provincia de Córdoba empiezan a subir hacia principio de año para descender en el mes de abril y luego volver a aumentar hacia mitad del año 2021.*
 
-
 *Provincia 1 - Santa Fe*
 
-*Gráfico de líneas con el precio promedio de alquiler mes a mes (enero 2020 - mes actual 2021/22)*
+*Gráfico de líneas con el precio promedio de alquiler mes a mes (2020 - 2021)*
 
 ```{r}
 data_properati_non_CABA %>% 
@@ -758,7 +732,7 @@ data_properati_non_CABA %>%
        subtitle  = "Fuentes: PROPERATI")
 ```
 
-*Conclusiones del gráfico: Luego del primer semestre del año 2020, el precio de los alquileres comienza a aumentar hasta lograr una estabilidad hacia los últimos meses del mismo año. Posteriormente vuelve a ascender en los cinco primeros meses del año 2021 y después experimenta una baja.*
+*Conclusiones del gráfico: Luego del primer semestre del año 2020, el precio de los alquileres comienza a aumentar hasta lograr una estabilidad hacia los últimos meses del mismo año. Posteriormente vuelve a ascender en los cinco primeros meses del año 2021 y después experimenta una baja. Mantiene una tendencia ascendente como en los casos anteriores. El alquiler en Santa Fe pasó de 12000 a 20000, un aumento del 65%.*
 
 *Comparación alquileres vs ventas*
 
@@ -769,7 +743,7 @@ ggplot(data_properati_non_CABA %>% filter(l2 == "Santa Fe"))+
 
 *Conclusiones del gráfico: Se observa, como en las provincias analizadas anteriormente, que hay una mayor cantidad de publicaciones de propiedades a la venta por sobre las de alquiler.*
 
-*Gráfico de líneas con el precio promedio de venta mes a mes (enero 2020 - mes actual 2021/22)*
+*Gráfico de líneas con el precio promedio de venta mes a mes (2020 - 2021)*
 
 ```{r}
 data_properati_non_CABA %>% 
@@ -787,4 +761,12 @@ data_properati_non_CABA %>%
 
 *Conclusiones del gráfico: En relación a los precios de venta, se observa un pico hacia finales del 2020 con una gran baja de los mismos en enero de 2021 para luego volver a subir y descender hacia abril que finalmente hay un aumento considerable de los mismos para luego lograr cierta estabilidad.*
 
-*Conclusiones Finales del Análisis: Como impactó la Nueva Ley de Alquileres en el Mercado Inmobiliario*
+*Conclusiones Finales del Análisis: Como impactó la Nueva Ley de Alquileres en el Mercado Inmobiliario.*
+
+*Como primeras conclusiones de este análisis destacamos el gran trabajo de saneamiento de datos que hubo que realizar. El dataset original de Properati contaba con 1M de registros, sin embargo luego de limpieza de datos sucios (sin precio, sin ubicación, valores extremos, valores negativos, etc etc) nos quedamos con un dataset de 250 mil observaciones. Sólo un 25% del dataset original terminó siendo válido para el análisis, 100 mil para Capital Federal y 150 mil para las demás Provincias. Adicionalmente, encontramos que trabajar con los valores PROMEDIO resultó súmamente confuso en varios de nuestros análisis. Esto nos lleva a la conclusión que existen valores extremos o outliers en la muestra que desdibujan los gráficos y pueden tergiversar el análisis.*
+
+*Por otro lado respecto al análisis en sí, todas las provincias muestran la misma tendencia, a la suba de los precios de alquiler. En Capital Federal se muestra más marcada, debido a la escasez de suelo. Córdoba y Santa Fe por ejemplo no llegan las subidas de CABA y PBA donde duplicaron los precios entre Mayo 2020 y Junio 2021.*
+
+*Adicionalmente, todas las Provincias muestran un descenso en la cantidad de publicaciones en general. Podríamos decir que los inmuebles "dejaron de moverse en el mercado". Esto se ve más fuertemente en el mercado de alquileres. Podemos concluir que la ley 27.551 trajo una restricción de la oferta inmueble, sobretodo en los alquileres.*
+
+*Por último, el mercado de venta de inmuebles continuó con su histórica tendencia alcista. En análisis futuros, con el paso del tiempo, podría revisarse si la restricción de la oferta en alquileres se trasladó a mayor oferta en las ventas, y por ende un descenso de los precios.*
