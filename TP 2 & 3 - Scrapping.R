@@ -14,28 +14,13 @@ crypt_table <- html_table(crypt_table, fill = T) %>%
 
 # Quitamos caracteres que estan en las tablas descargadas para quedarnos con los numeros
 
-crypt_table$Var.2 <- gsub("B","", crypt_table$Var.2)
-crypt_table$Var.2 <- gsub("M","", crypt_table$Var.2)
-crypt_table$Var.2 <- gsub("K","", crypt_table$Var.2)
-crypt_table$Var.3 <- gsub("B","", crypt_table$Var.3)
-crypt_table$Var.3 <- gsub("M","", crypt_table$Var.3)
-crypt_table$Var.3 <- gsub("K","", crypt_table$Var.3)
-crypt_table$Var.4 <- gsub("B","", crypt_table$Var.2)
-crypt_table$Var.4 <- gsub("M","", crypt_table$Var.4)
-crypt_table$Var.4 <- gsub("K","", crypt_table$Var.4)
-crypt_table$Var.5 <- gsub("B","", crypt_table$Var.5)
-crypt_table$Var.5 <- gsub("M","", crypt_table$Var.5)
-crypt_table$Var.5 <- gsub("K","", crypt_table$Var.5)
-crypt_table$Var.6 <- gsub("B","", crypt_table$Var.6)
-crypt_table$Var.6 <- gsub("M","", crypt_table$Var.6)
-crypt_table$Var.6 <- gsub("K","", crypt_table$Var.6)
-crypt_table$Var.7 <- gsub("B","", crypt_table$Var.7)
-crypt_table$Var.7 <- gsub("M","", crypt_table$Var.7)
-crypt_table$Var.7 <- gsub("K","", crypt_table$Var.7)
-crypt_table$Var.8 <- gsub("B","", crypt_table$Var.8)
-crypt_table$Var.8 <- gsub("M","", crypt_table$Var.8)
-crypt_table$Var.8 <- gsub("K","", crypt_table$Var.8)
-crypt_table$Var.8 <- gsub("%","", crypt_table$Var.8)
+
+# ALTERNATIVA PARA LIMPIEZA
+ crypt_table %>% 
+  as_tibble() %>% 
+  janitor::clean_names() %>% 
+  mutate(across(.cols = c(var_2:var_8), # COMBINO mutate() con across() donde defino primero sobre que columnas operara la transformacion
+                .fns = ~ str_remove_all(string = ., pattern = "\\D"))) # aplico luego una tarea para todas las columnas (remover caracterres que no sean numericos VER: https://evoldyn.gitlab.io/evomics-2018/ref-sheets/R_strings.pdf)
 
 # Imputamos los nombres correspondientes a las Columnas
 
